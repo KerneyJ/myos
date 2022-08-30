@@ -113,22 +113,5 @@ void kernel_main(void)
 {
     /* Initialize terminal interface */
     terminal_initialize();
- 
-    /* Newline support is left as an exercise. */
-    char string[9];
-    string[0] = 'H';
-    string[1] = 'e';
-    string[2] = 'l';
-    string[3] = 'l';
-    string[4] = 'o';
-    string[5] = ' ';
-    string[6] = (char)9;
-    string[7] = '\n';
-    string[8] = '\0';
     terminal_writestring("Hello, kernel World!\n");
-    terminal_writestring("Something on another line");
-    for(int i = 1; i < 100; ++i){
-	string[6] = (char)i;
-        terminal_writestring(string);
-    }
 }
