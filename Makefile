@@ -1,31 +1,40 @@
-AS=./cross/bin/i686-elf-as
-CC=./cross/bin/i686-elf-gcc
+KERNELDIR=kernel/kernel
+ARCHDIR=kernel/arch/i386
+
+AS=cross/bin/i686-elf-as
+CC=cross/bin/i686-elf-gcc
 CFLAGS=-std=gnu99 -ffreestanding -O2 -Wall -Wextra
-LDFLAGS=-T linker.ld -ffreestanding -O2 -nostdlib boot.o kernel.o -lgcc
+LDFLAGS=-ffreestanding -O2 -nostdlib -lgcc
 GRUB=grub-mkrescue
+
+include $(KERNELDIR)/make.config
+include $(ARCHDIR)/make.config
+
+OBJS=$(KERNEL_ARCH_OBJS)\
+	 $(KERNEL_OBJS)
 
 all: build-iso clean
 
 run:
 	qemu-system-i386 -cdrom myos.iso
 
-.PHONY: build-iso
+.PHONY: build-iso clean
+
 build-iso: myos.bin
 	cp $^ isodir/boot/myos.bin
 	cp grub.cfg isodir/boot/grub/grub.cfg
 	$(GRUB) -o myos.iso isodir
 
-myos.bin: kernel.o boot.o
-	$(CC) -o $@ $(LDFLAGS)
+myos.bin: $(OBJS)
+	$(CC) -o $@ -T $(ARCHDIR)/linker.ld $(LDFLAGS) $(OBJS)
 
-kernel.o: kernel.c
+%.o: %.c
 	$(CC) -c $^ $(CFLAGS) -o $@
 
-boot.o: boot.s
+%.o: %.s
 	$(AS) -c $^ -o $@
 
-.PHONY: clean
 clean:
-	rm -rf kernel.o
-	rm -rf boot.o
-	rm -rf myos.bin
+	rm kernel/*/*.o
+	rm kernel/*/*/*.o
+	rm myos.bin
