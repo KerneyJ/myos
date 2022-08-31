@@ -1,5 +1,6 @@
 KERNELDIR=kernel/kernel
 ARCHDIR=kernel/arch/i386
+INCLUDEDIR=kernel/include
 
 AS=cross/bin/i686-elf-as
 CC=cross/bin/i686-elf-gcc
@@ -29,7 +30,7 @@ myos.bin: $(OBJS)
 	$(CC) -o $@ -T $(ARCHDIR)/linker.ld $(LDFLAGS) $(OBJS)
 
 %.o: %.c
-	$(CC) -c $^ $(CFLAGS) -o $@
+	$(CC) -c $^ $(CFLAGS) -o $@ -isystem $(INCLUDEDIR)
 
 %.o: %.s
 	$(AS) -c $^ -o $@
