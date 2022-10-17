@@ -14,7 +14,7 @@ include $(ARCHDIR)/make.config
 OBJS=$(KERNEL_ARCH_OBJS)\
 	 $(KERNEL_OBJS)
 
-all: build-iso clean
+all: build-iso
 
 run:
 	qemu-system-i386 -cdrom myos.iso
@@ -36,6 +36,6 @@ myos.bin: $(OBJS)
 	$(AS) -c $^ -o $@
 
 clean:
-	rm -f kernel/*/*.o
-	rm -f kernel/*/*/*.o
-	rm -f myos.bin
+	rm myos.*
+	rm kernel/*/*.o
+	rm kernel/*/*/*.o
