@@ -1,4 +1,5 @@
 .globl pgdir_load
+pgdir_load:
   push %ebp
   mov %esp, %ebp
   mov 8(%esp), %eax
