@@ -1,5 +1,5 @@
 #include <stdarg.h>
-#include "printf.h"
+#include "stdio.h"
 #include "tty.h"
 
 static char digits[] = "0123456789ABCDEF";
@@ -26,7 +26,10 @@ void printf(const char* restrict format, ...){
 				    printnum(va_arg(params, int), 10);
 				    break;
 				case 'x':
+					term_putchar('0');
+					term_putchar('x');
 					printnum(va_arg(params, int), 16);
+					break;
 			}
 		}
         else if(*format == '\n')

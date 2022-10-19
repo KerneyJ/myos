@@ -1,6 +1,7 @@
 KERNELDIR=kernel/kernel
 ARCHDIR=kernel/arch/i386
 INCLUDEDIR=kernel/include
+LIBDIR=kernel/lib
 
 AS=cross/bin/i686-elf-as
 CC=cross/bin/i686-elf-gcc
@@ -10,9 +11,11 @@ GRUB=grub-mkrescue
 
 include $(KERNELDIR)/make.config
 include $(ARCHDIR)/make.config
+include $(LIBDIR)/make.config
 
 OBJS=$(KERNEL_ARCH_OBJS)\
-	 $(KERNEL_OBJS)
+	 $(KERNEL_OBJS) \
+     $(LIB_OBJS) \
 
 all: build-iso
 
