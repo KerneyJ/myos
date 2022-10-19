@@ -3,7 +3,6 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include <stdbool.h>
 
 void term_init(void);
 void term_setcolor(uint8_t color);

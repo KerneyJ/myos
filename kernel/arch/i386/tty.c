@@ -10,13 +10,6 @@ size_t term_column;
 uint8_t term_color;
 uint16_t* term_buffer;
 
-size_t strlen(const char* str){
-    size_t len = 0;
-	while(str[len])
-		len++;
-    return len;
-}
-
 void term_init(void){
     term_row = 0;
 	term_column = 0;
