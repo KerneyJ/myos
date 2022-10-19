@@ -1,7 +1,7 @@
 #include "vm.h"
 
-uint32_t pgdir[1024]; //__attribute__((alligned(4096)));
-uint32_t kernel_pgtbl[1024]; //__attribute__((alligned(4096)));
+uint32_t pgdir[1024] __attribute__((aligned(4096)));
+uint32_t kernel_pgtbl[1024] __attribute__((aligned(4096)));
 
 extern void pgdir_load(uint32_t*); // load page directory
 extern void pg_enable(); // turn on paging
@@ -19,6 +19,8 @@ void pgdir_init(){
 		// supervisor mode, read write, not present
 		pgdir[i] = PTE_RW;
 	}
+	// uint32_t *pgdir_loc = 0x100000;
+	// *pgdir_loc = *pgdir;
 }
 
 void pgtbl_init(){
