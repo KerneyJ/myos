@@ -5,11 +5,12 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-void terminal_initialize(void);
-void terminal_setcolor(uint8_t color);
-void terminal_putentryat(char c, uint8_t color, size_t x, size_t y);
-void terminal_putchar(char c);
-void terminal_write(const char* data, size_t size);
-void terminal_writestring(const char* data);
+void term_init(void);
+void term_setcolor(uint8_t color);
+void term_putat(char c, uint8_t color, size_t x, size_t y);
+void term_putchar(char c);
+void term_newln(void);
+void term_wrt(const char* data, size_t size);
+void term_wrtstr(const char* data);
 
 #endif

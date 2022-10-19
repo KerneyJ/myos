@@ -1,11 +1,11 @@
+#include "printf.h"
 #include "tty.h" 
 #include "vm.h"
 
 void kernel_main(void) 
 {
     /* Initialize terminal interface */
-    terminal_initialize();
+    term_init();
 	pg_init();
-	terminal_writestring("Hello World!\n");
-	terminal_writestring("Something to prove that it compiles\n");
+	printf("Hello World! %i\n", 45);
 }
