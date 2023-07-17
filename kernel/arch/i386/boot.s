@@ -64,6 +64,13 @@ _start:
 	in assembly as languages such as C cannot function without a stack.
 	*/
 	mov $stack_top, %esp
+
+	/*
+	Push the pointer to the Multiboot information structure
+	Push the magic value
+	*/
+	pushl %ebx
+	pushl %eax
  
 	/*
 	This is a good place to initialize crucial processor state before the
