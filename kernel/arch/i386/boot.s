@@ -57,7 +57,7 @@ _start:
 	itself. It has absolute and complete power over the
 	machine.
 	*/
- 
+
 	/*
 	To set up a stack, we set the esp register to point to the top of the
 	stack (as it grows downwards on x86 systems). This is necessarily done

@@ -1,6 +1,6 @@
 .globl pg_enable
 pg_enable:
-    push %ebp
+	push %ebp
 	mov %esp, %ebp
 	mov %cr0, %eax
 	or $0x80000000, %eax

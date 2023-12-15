@@ -15,7 +15,7 @@ include $(LIBDIR)/make.config
 
 OBJS=$(KERNEL_ARCH_OBJS)\
 	 $(KERNEL_OBJS) \
-     $(LIB_OBJS) \
+	 $(LIB_OBJS) \
 
 all: build-iso
 
