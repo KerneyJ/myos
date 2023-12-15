@@ -1,0 +1,7 @@
+isodir/
+cross/
+utils/
+*.o
+*.bin
+*.iso
+*.png
