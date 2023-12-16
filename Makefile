@@ -39,6 +39,6 @@ myos.bin: $(OBJS)
 	$(AS) -c $^ -o $@
 
 clean:
-	rm myos.*
 	rm kernel/*/*.o
 	rm kernel/*/*/*.o
+	rm myos.*
