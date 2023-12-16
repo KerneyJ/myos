@@ -48,12 +48,6 @@ check_a20:
 	mov $0x1, %ax
 
 check_a20__exit:
-//	pop %si
-//	pop %di
-//	pop %es
-//	pop %ds
-//	popf
-
 	push %ax
 	mov %cx, %ax
 	mov $0x70, %dx  // CMOS I/O port 0x70 for NMI
@@ -65,4 +59,49 @@ check_a20__exit:
 	pop %bx
 	popf
 	sti
+	ret
+
+.globl enable_a20
+enable_a20:
+	cli
+
+	call a20wait
+	mov $0xAD, %al
+	out %al, $0x64
+
+	call a20wait
+	mov $0xD0, %al
+	out %al, $0xD0
+
+	call a20wait2
+	in $0x60, %al
+	push %ax
+
+	call a20wait
+	mov $0xD1, %al
+	out %al, $0x64
+
+	call a20wait
+	pop %ax
+	or $0x2, %al
+	out %al, $0x60
+
+	call a20wait
+	mov $0xAE, %al
+	out %al, $0x64
+
+	call a20wait
+	sti
+	ret
+
+a20wait:
+	in $0x64, %al
+	test $0x02, %al
+	jnz a20wait
+	ret
+
+a20wait2:
+	in $0x64, %al
+	test $0x01, %al
+	jz a20wait2
 	ret
