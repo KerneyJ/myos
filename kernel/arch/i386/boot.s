@@ -35,16 +35,43 @@ undefined behavior.
 stack_bottom:
 .skip 16384 # 16 KiB
 stack_top:
- 
+
+.section .data
+gdt32:
+	.quad 0x0000000000000000
+	.quad 0x00cf9a000000ffff
+	.quad 0x00cf92000000ffff
+gdtr32:
+	.short 23
+	.int gdt32
+
 /*
 The linker script specifies _start as the entry point to the kernel and the
 bootloader will jump to this position once the kernel has been loaded. It
 doesn't make sense to return from this function as the bootloader is gone.
 */
 .section .text
+.code16
 .global _start
 .type _start, @function
 _start:
+	push %eax
+	call check_a20
+	cmp $0x1, %eax
+	je a20_enabled
+	// FIXME need to add a function to turn on the a20 line
+a20_enabled:
+	cli
+	mov $gdtr32, %ecx
+	lgdt (%ecx)
+	mov %cr0, %ecx
+	or $0x01, %ecx
+	mov %ecx, %cr0
+	push $.trampoline
+	ljmp *(%esp)
+
+.code32
+.trampoline:
 	/*
 	The bootloader has loaded us into 32-bit protected mode on a x86
 	machine. Interrupts are disabled. Paging is disabled. The processor
@@ -82,9 +109,6 @@ _start:
 	C++ features such as global constructors and exceptions will require
 	runtime support to work as well.
 	*/
-	mov $stack_bottom, %edi
-	call setup_segment
-	call setup_gdt
 
 	/*
 	Enter the high-level kernel. The ABI requires the stack is 16-byte

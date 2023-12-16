@@ -16,5 +16,4 @@ void kernel_main(uint32_t magic, uint32_t addr){
 		printf("[-]Magic number does not match multiboot magic\n");
 	}
 	pg_init(); printf("[+]Paging Initialized\n");
-	int a20 = setup_arch(); printf("[*]Arch setup return %i\n", a20);
 }

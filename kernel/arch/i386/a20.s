@@ -48,13 +48,6 @@ check_a20:
 	mov $0x1, %ax
 
 check_a20__exit:
-//	pop %si
-//	pop %di
-//	pop %es
-//	pop %ds
-//	popf
-
-	push %ax
 	mov %cx, %ax
 	mov $0x70, %dx  // CMOS I/O port 0x70 for NMI
 	outb %al, %dx // reset NMI
@@ -63,6 +56,7 @@ check_a20__exit:
 	pop %di
 	pop %dx
 	pop %bx
+	pop %ax
 	popf
 	sti
 	ret
