@@ -51,27 +51,20 @@ bootloader will jump to this position once the kernel has been loaded. It
 doesn't make sense to return from this function as the bootloader is gone.
 */
 .section .text
-.code16
+// .code16 // removed because multiboot puts me in 32bit mode, through I have to change things
 .global _start
 .type _start, @function
 _start:
-	push %eax
-	call check_a20
-	cmp $0x1, %eax
-	je a20_enabled
-	// FIXME need to add a function to turn on the a20 line
-a20_enabled:
 	cli
 	mov $gdtr32, %ecx
 	lgdt (%ecx)
 	mov %cr0, %ecx
 	or $0x01, %ecx
 	mov %ecx, %cr0
-	push $.trampoline
-	ljmp *(%esp)
+	ljmp $0x08, $trampoline
 
 .code32
-.trampoline:
+trampoline:
 	/*
 	The bootloader has loaded us into 32-bit protected mode on a x86
 	machine. Interrupts are disabled. Paging is disabled. The processor
