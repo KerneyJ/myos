@@ -12,8 +12,8 @@ uint32_t* pg_bitmap = 10485760;// _kernel_end % PG_SIZE == 0 ? _kernel_end : (PG
 /* Invoke all functions involed in turning on paging
  */
 void pg_init(){
-    pgdir_init();
-    pgtbl_init();
+	pgdir_init();
+	pgtbl_init();
 	pgdir_load(pgdir);
 	pg_enable();
 }
@@ -21,7 +21,7 @@ void pg_init(){
 /* Initialize the top level page table(page directory)
  */
 void pgdir_init(){
-    uint32_t i;
+	uint32_t i;
 	for(i = 0; i < 1024; ++i){
 		// supervisor mode, read write, not present
 		pgdir[i] = PTE_RW;
@@ -31,7 +31,7 @@ void pgdir_init(){
 /* Initialize the kernel page table as a directly mapped page table
  */
 void pgtbl_init(){
-    uint32_t i;
+	uint32_t i;
 	for(i = 0; i < 1024; ++i){
 		kernel_pgtbl[i] = (i * 0x1000) | PTE_PRESENT | PTE_RW;
 	}
@@ -43,7 +43,7 @@ void pgtbl_init(){
  * this in the future. Kernel should free some pages frames too.
  */
 void pf_init(){
-    uint32_t i;
+	uint32_t i;
 
 	// Mark 10 MiB as used
 	for(i = 0; i < 80; ++i){
