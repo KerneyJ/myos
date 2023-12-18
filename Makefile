@@ -8,6 +8,7 @@ CC=cross/bin/i686-elf-gcc
 CFLAGS=-std=gnu99 -ffreestanding -O2 -Wall -Wextra
 LDFLAGS=-ffreestanding -O2 -nostdlib -lgcc
 GRUB=grub-mkrescue
+EMU=qemu-system-i386
 
 include $(KERNELDIR)/make.config
 include $(ARCHDIR)/make.config
@@ -20,7 +21,7 @@ OBJS=$(KERNEL_ARCH_OBJS)\
 all: build-iso
 
 run:
-	qemu-system-i386 -kernel myos.bin
+	$(EMU) -kernel myos.bin
 
 .PHONY: build-iso clean
 
