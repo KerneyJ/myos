@@ -7,7 +7,7 @@ extern void pg_enable(); // turn on paging
 uint32_t pgdir[1024] __attribute__((aligned(PG_SIZE)));
 uint32_t kernel_pgtbl[1024] __attribute__((aligned(PG_SIZE)));
 // need to store 32768 uint32's to map 4G(32 pages) stored currently at 10Mib
-uint32_t* pg_bitmap = 10485760;// _kernel_end % PG_SIZE == 0 ? _kernel_end : (PG_SIZE - (_kernel_end % PG_SIZE)) + _kernel_end;
+uint32_t* pg_bitmap = (uint32_t*)10485760;// _kernel_end % PG_SIZE == 0 ? _kernel_end : (PG_SIZE - (_kernel_end % PG_SIZE)) + _kernel_end;
 
 /* Invoke all functions involed in turning on paging
  */
