@@ -1,3 +1,4 @@
+.code32
 .globl pg_enable
 pg_enable:
 	push %ebp

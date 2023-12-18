@@ -52,16 +52,20 @@ doesn't make sense to return from this function as the bootloader is gone.
 */
 .section .text
 // .code16 // removed because multiboot puts me in 32bit mode, through I have to change things
+.code32
 .global _start
 .type _start, @function
 _start:
 	cli
 	mov $gdtr32, %ecx
 	lgdt (%ecx)
-	mov %cr0, %ecx
-	or $0x01, %ecx
-	mov %ecx, %cr0
-	ljmp $0x08, $trampoline
+	
+	mov %eax, %ecx // move multiboot header to ecx
+	mov %cr0, %eax
+	or $0x01, %eax
+	mov %eax, %cr0
+	mov %ecx, %eax
+	jmp $0x08, $trampoline
 
 .code32
 trampoline:

@@ -1,3 +1,4 @@
+.code32
 .globl pgdir_load
 pgdir_load:
   push %ebp
