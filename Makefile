@@ -19,8 +19,12 @@ ifeq ($(ARCH), x86_64)
 	AS=cross/bin/x86_64-elf-as
 	CC=cross/bin/x86_64-elf-gcc
 	LD=cross/bin/x86_64-elf-ld
-	EMU=qemu-system-x86_64 -machine q35 # added flag -machine q35 to fix Error loading uncompressed kernel without PVH ELF Note
+	EMU=qemu-system-x86_64 # -nographic -device virtio-blk-device,drive=x0,bus=virtio-mmio-bus.0 # added flag -machine q35 to fix Error loading uncompressed kernel without PVH ELF Note
 endif
+
+#QEMUOPTS = -machine virt -bios none -m 128M -smp 8 -nographic
+#QEMUOPTS += -drive file=fs.img,if=none,format=raw,id=x0
+#QEMUOPTS += -device virtio-blk-device,drive=x0,bus=virtio-mmio-bus.0
 
 include $(KERNELDIR)/make.config
 include $(ARCHDIR)/make.config
@@ -33,7 +37,7 @@ OBJS=$(KERNEL_ARCH_OBJS)\
 all: build-iso
 
 run:
-	$(EMU) -kernel myos.bin -machine q35,accel=kvm
+	$(EMU) -cdrom myos.iso
 
 .PHONY: build-iso clean
 
@@ -47,6 +51,9 @@ myos.bin: $(OBJS)
 
 %.o: %.c
 	$(CC) -c $^ $(CFLAGS) -o $@ -isystem $(INCLUDEDIR)
+
+%.o: %.S
+	$(CC) -c $^ -o $@ -isystem $(INCLUDEDIR)
 
 %.o: %.s
 	$(AS) -c $^ -o $@

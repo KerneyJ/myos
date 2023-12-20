@@ -1,23 +1,79 @@
-/* Declare constants for the multiboot header. */
-.set ALIGN,    1<<0             /* align loaded modules on page boundaries */
-.set MEMINFO,  1<<1             /* provide memory map */
-.set FLAGS,    ALIGN | MEMINFO  /* this is the Multiboot 'flag' field */
-.set MAGIC,    0x1BADB002       /* 'magic number' lets bootloader find the header */
-.set CHECKSUM, -(MAGIC + FLAGS) /* checksum of above, to prove we are multiboot */
- 
-/* 
+/* ELF Notes */
+#define ASM_FILE
+#include "multiboot2.h"
+/* Declare constants for the multiboot header.
+.set ALIGN,    1<<0             // align loaded modules on page boundaries
+.set MEMINFO,  1<<1             // provide memory map
+.set FLAGS,    ALIGN | MEMINFO  // this is the Multiboot 'flag' field
+.set MAGIC,    0x1BADB002       // 'magic number' lets bootloader find the header
+.set CHECKSUM, -(MULTIBOOT2_HEADER_MAGIC + FLAGS) // checksum of above, to prove we are multiboot
+*/
+
+/*
 Declare a multiboot header that marks the program as a kernel. These are magic
 values that are documented in the multiboot standard. The bootloader will
 search for this signature in the first 8 KiB of the kernel file, aligned at a
 32-bit boundary. The signature is in its own section so the header can be
 forced to be within the first 8 KiB of the kernel file.
 */
-.section .multiboot
-.align 4
-.long MAGIC
-.long FLAGS
-.long CHECKSUM
- 
+//.section .multiboot
+//multiboot_header:
+//.align 8
+//.long MULTIBOOT2_HEADER_MAGIC
+//.long FLAGS
+//.long CHECKSUM
+//multiboot_header:
+//	.align 8
+//	/*  magic */
+//	.long   MULTIBOOT2_HEADER_MAGIC
+//	/*  ISA: i386 */
+//	.long   MULTIBOOT_ARCHITECTURE_I386
+//	/*  Header length. */
+//	.long   multiboot_header_end - multiboot_header
+//	/*  checksum */
+//	.long   (MULTIBOOT2_HEADER_MAGIC + MULTIBOOT_ARCHITECTURE_I386 + (multiboot_header_end - multiboot_header))
+//framebuffer_tag_start:
+//        .short MULTIBOOT_HEADER_TAG_FRAMEBUFFER
+//        .short MULTIBOOT_HEADER_TAG_OPTIONAL
+//        .long framebuffer_tag_end - framebuffer_tag_start
+//        .long 1024
+//        .long 768
+//        .long 32
+//framebuffer_tag_end:
+//        .short MULTIBOOT_HEADER_TAG_END
+//        .short 0
+//        .long 8
+//multiboot_header_end:
+
+.code32
+.section multiboot
+.align 8
+
+.global mbheader
+
+mbheader:
+	.long 0xe85250d6
+	.long 0
+	.long .hdr_end - mbheader
+	.long -(0xe85250d6 + 0 + (.hdr_end - mbheader))
+
+	/* BEGIN TAGS */
+
+	/* framebufer */
+		framebuffer_tag_start:  
+			.word 5
+			.word 0
+			.long 20 # framebuffer_tag_end - framebuffer_tag_start
+			.long 80 // FRAMEBUFFER_WIDTH
+			.long 25 // CONFIG_FRAMEBUFFER_HEIGHT
+			.long 32
+		framebuffer_tag_end:
+
+
+	/* tags end */
+	.long 0, 0
+	.long 8
+.hdr_end:
 /*
 The multiboot standard does not define the value of the stack pointer register
 (esp) and it is up to the kernel to provide a stack. This allocates room for a
@@ -45,6 +101,15 @@ gdtr32:
 	.short 23
 	.int gdt32
 
+gdt64:
+	.quad 0x0000000000000000
+	.quad 0x00af98000000ffff
+	.quad 0x00cf92000000ffff
+gdt64_end:
+	.quad 0x0000000000000000
+gdtr64:
+	.short gdt64_end -gdt64 -1
+	.quad gdt64
 /*
 The linker script specifies _start as the entry point to the kernel and the
 bootloader will jump to this position once the kernel has been loaded. It
@@ -52,19 +117,17 @@ doesn't make sense to return from this function as the bootloader is gone.
 */
 .section .text
 // .code16 // removed because multiboot puts me in 32bit mode, through I have to change things
-.code32
 .global _start
 .type _start, @function
 _start:
 	cli
-	mov $gdtr32, %ecx
-	lgdt (%ecx)
-	
-	mov %eax, %ecx // move multiboot header to ecx
+	mov %eax, %edx // move multiboot header to edx
+	mov $gdtr32, %eax
+	lgdt (%eax)
+
 	mov %cr0, %eax
 	or $0x01, %eax
 	mov %eax, %cr0
-	mov %ecx, %eax
 	jmp $0x08, $trampoline
 
 .code32
@@ -88,6 +151,28 @@ trampoline:
 	in assembly as languages such as C cannot function without a stack.
 	*/
 	mov $stack_top, %esp
+
+	/*
+	enable PAE and PSE
+	mov %cr4, %eax
+	or $0x30, %eax // PSE bit 4, PAE bit 5
+	mov %eax, %cr4
+	*/
+
+	/*
+	Enter long mode and NX bit(allows sections of address space to be marked as non-executable) 
+	mov $0xC0000080, %ecx
+	rdmsr
+	or 0x0000000000000901, %eax // 0x100(Long mode) | 0x800(NX bit) | 0x001 (SCE[Syscall Enable] bit)
+	wrmsr
+	*/
+
+	/*
+	Enable paging
+	mov %cr0, %eax
+	or $0x80000000, %eax
+	mov %eax, %cr0
+	*/
 
 	/*
 	Push the pointer to the Multiboot information structure
