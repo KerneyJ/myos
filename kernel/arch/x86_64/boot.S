@@ -84,8 +84,9 @@ stack_bottom:
 .skip 16384 # 16 KiB
 stack_top:
 
+
 .section .data
-.globl gdt
+.global gdt
 gdt:
 	.quad 0x0000000000000000
 	.quad 0x00AF98000000FFFF
@@ -93,22 +94,35 @@ gdt:
 gdt_end:
 	.quad 0x0000000000000000
 
-.globl gdtr
+.global gdtr
 gdtr:
 	.word gdt_end - gdt - 1
 	.quad gdt
 
 // 32-bit GDT
-.globl gdt32
+.global gdt32
 gdt32:
 	.quad 0x0000000000000000
 	.quad 0x00cf9a000000ffff
 	.quad 0x00cf92000000ffff
 
-.globl gdtr32
+.global gdtr32
 gdtr32:
 	.word 23
 	.quad gdt32
+
+pml3:
+	.quad (pml2 + PG_PRESENT + PG_WRITABLE)
+	.rept 511
+		.quad 0
+	.endr
+
+pml2:
+	.set pg, 0
+	.rept 512
+		.quad (pg + PG_PRESENT + PG_BIG + PG_WRITABLE)
+		.set pg, pg + (1 << (LOG_TABLE_SIZE + LOG_PAGE_SIZE))
+	.endr
 
 /*
 The linker script specifies _start as the entry point to the kernel and the
