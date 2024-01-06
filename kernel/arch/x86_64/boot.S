@@ -111,6 +111,7 @@ gdtr32:
 	.word 23
 	.quad gdt32
 
+.global pml4
 pml4:
 	.quad (pml3 + PG_PRESENT + PG_WRITABLE)
 	.rept 271
