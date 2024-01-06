@@ -36,6 +36,30 @@ search for this signature in the first 8 KiB of the kernel file, aligned at a
 32-bit boundary. The signature is in its own section so the header can be
 forced to be within the first 8 KiB of the kernel file.
 */
+.align PAGE_SIZE
+.global pml4
+pml4:
+	.quad (pml3 + PG_PRESENT + PG_WRITABLE)
+	.rept 271
+		.quad 0
+	.endr
+	.quad (pml3 + PG_PRESENT + PG_WRITABLE)
+	.rept 239
+		.quad 0
+	.endr
+
+pml3:
+	.quad (pml2 + PG_PRESENT + PG_WRITABLE)
+	.rept 511
+		.quad 0
+	.endr
+
+pml2:
+	.set pg, 0
+	.rept 512
+		.quad (pg + PG_PRESENT + PG_BIG + PG_WRITABLE)
+		.set pg, pg + (1 << (LOG_TABLE_SIZE + LOG_PAGE_SIZE))
+	.endr
 
 .code32
 .section multiboot
@@ -84,7 +108,6 @@ stack_bottom:
 .skip 16384 # 16 KiB
 stack_top:
 
-
 .section .data
 .global gdt
 gdt:
@@ -111,29 +134,6 @@ gdtr32:
 	.word 23
 	.quad gdt32
 
-.global pml4
-pml4:
-	.quad (pml3 + PG_PRESENT + PG_WRITABLE)
-	.rept 271
-		.quad 0
-	.endr
-	.quad (pml3 + PG_PRESENT + PG_WRITABLE)
-	.rept 239
-		.quad 0
-	.endr
-
-pml3:
-	.quad (pml2 + PG_PRESENT + PG_WRITABLE)
-	.rept 511
-		.quad 0
-	.endr
-
-pml2:
-	.set pg, 0
-	.rept 512
-		.quad (pg + PG_PRESENT + PG_BIG + PG_WRITABLE)
-		.set pg, pg + (1 << (LOG_TABLE_SIZE + LOG_PAGE_SIZE))
-	.endr
 
 /*
 The linker script specifies _start as the entry point to the kernel and the
