@@ -28,13 +28,15 @@ SECTIONS
 	{
 		*(.rodata)
 	}
- 
+
 	/* Read-write data (initialized) */
 	.data BLOCK(4K) : ALIGN(4K)
 	{
 		*(.data)
 	}
- 
+
+	/* paging data */
+
 	/* Read-write data (uninitialized) and stack */
 	.bss BLOCK(4K) : ALIGN(4K)
 	{

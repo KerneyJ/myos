@@ -8,6 +8,26 @@
 .set MAGIC,    0x1BADB002       // 'magic number' lets bootloader find the header
 .set CHECKSUM, -(MULTIBOOT2_HEADER_MAGIC + FLAGS) // checksum of above, to prove we are multiboot
 */
+// Constants and Definitions
+.equ KERNEL_VMA, 0xffff880000000000
+.equ MSR_EFER, 0xC0000080
+.equ EFER_LM, 0x100
+.equ EFER_NX, 0x800
+.equ EFER_SCE, 0x001
+.equ CR0_PAGING, 0x80000000
+.equ CR4_PAE, 0x20
+.equ CR4_PSE, 0x10
+.equ PG_PRESENT, 0x1
+.equ PG_WRITABLE, 0x2
+.equ PG_USER, 0x4
+.equ PG_BIG, 0x80
+.equ PG_NO_EXEC, 0x8000000000000000
+.equ LOG_TABLE_SIZE, 9
+.equ LOG_PAGE_SIZE, 12
+.equ PAGE_SIZE, (1 << LOG_PAGE_SIZE)
+.equ TABLE_SIZE, (1 << LOG_TABLE_SIZE)
+.equ STACK_SIZE, 0x1000
+.equ STACK_ALIGN, 16
 
 /*
 Declare a multiboot header that marks the program as a kernel. These are magic
