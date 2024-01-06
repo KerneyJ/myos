@@ -111,6 +111,16 @@ gdtr32:
 	.word 23
 	.quad gdt32
 
+pml4:
+	.quad (pml3 + PG_PRESENT + PG_WRITABLE)
+	.rept 271
+		.quad 0
+	.endr
+	.quad (pml3 + PG_PRESENT + PG_WRITABLE)
+	.rept 239
+		.quad 0
+	.endr
+
 pml3:
 	.quad (pml2 + PG_PRESENT + PG_WRITABLE)
 	.rept 511
