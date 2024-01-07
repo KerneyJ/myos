@@ -1,13 +1,3 @@
-/* ELF Notes */
-#define ASM_FILE
-#include "multiboot2.h"
-/* Declare constants for the multiboot header.
-.set ALIGN,    1<<0             // align loaded modules on page boundaries
-.set MEMINFO,  1<<1             // provide memory map
-.set FLAGS,    ALIGN | MEMINFO  // this is the Multiboot 'flag' field
-.set MAGIC,    0x1BADB002       // 'magic number' lets bootloader find the header
-.set CHECKSUM, -(MULTIBOOT2_HEADER_MAGIC + FLAGS) // checksum of above, to prove we are multiboot
-*/
 // Constants and Definitions
 .equ KERNEL_VMA, 0xffff880000000000
 .equ MSR_EFER, 0xC0000080
@@ -28,6 +18,8 @@
 .equ TABLE_SIZE, (1 << LOG_TABLE_SIZE)
 .equ STACK_SIZE, 0x1000
 .equ STACK_ALIGN, 16
+.equ FRAMEBUFFER_WIDTH, 80
+.equ FRAMEBUFFER_HEIGHT, 25
 
 /*
 Declare a multiboot header that marks the program as a kernel. These are magic
@@ -80,8 +72,8 @@ mbheader:
 			.word 5
 			.word 0
 			.long 20 # framebuffer_tag_end - framebuffer_tag_start
-			.long 80 // FRAMEBUFFER_WIDTH
-			.long 25 // CONFIG_FRAMEBUFFER_HEIGHT
+			.long FRAMEBUFFER_WIDTH
+			.long FRAMEBUFFER_HEIGHT
 			.long 32
 		framebuffer_tag_end:
 
@@ -202,6 +194,15 @@ _start:
 	addq %rbx, %rax
 	lgdt (%rax)
 
+	/* Move multiboot stuff back to rbx and rax
+	*/
+	mov %rdi, %rbx
+	mov %rsi, %rax
+
+	/* */
+	mov FRAMEBUFFER_WIDTH, %rdi
+	mov FRAMEBUFFER_HEIGHT, %rsi
+	call vga_config
 	/*
 	To set up a stack, we set the esp register to point to the top of the
 	stack (as it grows downwards on x86 systems). This is necessarily done
@@ -213,8 +214,8 @@ _start:
 	Push the pointer to the Multiboot information structure
 	Push the magic value
 	*/
-	push %rdi
-	push %rsi
+	push %rbx
+	push %rax
 
 	/*
 	This is a good place to initialize crucial processor state before the
