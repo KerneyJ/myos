@@ -194,6 +194,14 @@ _start:
 	.quad .next
 
 .next:
+
+	movq (gdtr + 2), %rax
+	movabs $0xffff880000000000, %rbx
+	addq %rbx, %rax
+	movq %rax, (gdtr + 2)
+	movq $gdtr, %rax
+	addq %rbx, %rax
+	lgdt (%rax)
 	/*
 	To set up a stack, we set the esp register to point to the top of the
 	stack (as it grows downwards on x86 systems). This is necessarily done
