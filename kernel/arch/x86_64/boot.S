@@ -8,6 +8,26 @@
 .set MAGIC,    0x1BADB002       // 'magic number' lets bootloader find the header
 .set CHECKSUM, -(MULTIBOOT2_HEADER_MAGIC + FLAGS) // checksum of above, to prove we are multiboot
 */
+// Constants and Definitions
+.equ KERNEL_VMA, 0xffff880000000000
+.equ MSR_EFER, 0xC0000080
+.equ EFER_LM, 0x100
+.equ EFER_NX, 0x800
+.equ EFER_SCE, 0x001
+.equ CR0_PAGING, 0x80000000
+.equ CR4_PAE, 0x20
+.equ CR4_PSE, 0x10
+.equ PG_PRESENT, 0x1
+.equ PG_WRITABLE, 0x2
+.equ PG_USER, 0x4
+.equ PG_BIG, 0x80
+.equ PG_NO_EXEC, 0x8000000000000000
+.equ LOG_TABLE_SIZE, 9
+.equ LOG_PAGE_SIZE, 12
+.equ PAGE_SIZE, (1 << LOG_PAGE_SIZE)
+.equ TABLE_SIZE, (1 << LOG_TABLE_SIZE)
+.equ STACK_SIZE, 0x1000
+.equ STACK_ALIGN, 16
 
 /*
 Declare a multiboot header that marks the program as a kernel. These are magic
@@ -16,34 +36,30 @@ search for this signature in the first 8 KiB of the kernel file, aligned at a
 32-bit boundary. The signature is in its own section so the header can be
 forced to be within the first 8 KiB of the kernel file.
 */
-//.section .multiboot
-//multiboot_header:
-//.align 8
-//.long MULTIBOOT2_HEADER_MAGIC
-//.long FLAGS
-//.long CHECKSUM
-//multiboot_header:
-//	.align 8
-//	/*  magic */
-//	.long   MULTIBOOT2_HEADER_MAGIC
-//	/*  ISA: i386 */
-//	.long   MULTIBOOT_ARCHITECTURE_I386
-//	/*  Header length. */
-//	.long   multiboot_header_end - multiboot_header
-//	/*  checksum */
-//	.long   (MULTIBOOT2_HEADER_MAGIC + MULTIBOOT_ARCHITECTURE_I386 + (multiboot_header_end - multiboot_header))
-//framebuffer_tag_start:
-//        .short MULTIBOOT_HEADER_TAG_FRAMEBUFFER
-//        .short MULTIBOOT_HEADER_TAG_OPTIONAL
-//        .long framebuffer_tag_end - framebuffer_tag_start
-//        .long 1024
-//        .long 768
-//        .long 32
-//framebuffer_tag_end:
-//        .short MULTIBOOT_HEADER_TAG_END
-//        .short 0
-//        .long 8
-//multiboot_header_end:
+.align PAGE_SIZE
+.global pml4
+pml4:
+	.quad (pml3 + PG_PRESENT + PG_WRITABLE)
+	.rept 271
+		.quad 0
+	.endr
+	.quad (pml3 + PG_PRESENT + PG_WRITABLE)
+	.rept 239
+		.quad 0
+	.endr
+
+pml3:
+	.quad (pml2 + PG_PRESENT + PG_WRITABLE)
+	.rept 511
+		.quad 0
+	.endr
+
+pml2:
+	.set pg, 0
+	.rept 512
+		.quad (pg + PG_PRESENT + PG_BIG + PG_WRITABLE)
+		.set pg, pg + (1 << (LOG_TABLE_SIZE + LOG_PAGE_SIZE))
+	.endr
 
 .code32
 .section multiboot
@@ -93,42 +109,42 @@ stack_bottom:
 stack_top:
 
 .section .data
+.global gdt
+gdt:
+	.quad 0x0000000000000000
+	.quad 0x00AF98000000FFFF
+	.quad 0x00CF92000000FFFF
+gdt_end:
+	.quad 0x0000000000000000
+
+.global gdtr
+gdtr:
+	.word gdt_end - gdt - 1
+	.quad gdt
+
+// 32-bit GDT
+.global gdt32
 gdt32:
 	.quad 0x0000000000000000
 	.quad 0x00cf9a000000ffff
 	.quad 0x00cf92000000ffff
-gdtr32:
-	.short 23
-	.int gdt32
 
-gdt64:
-	.quad 0x0000000000000000
-	.quad 0x00af98000000ffff
-	.quad 0x00cf92000000ffff
-gdt64_end:
-	.quad 0x0000000000000000
-gdtr64:
-	.short gdt64_end -gdt64 -1
-	.quad gdt64
+.global gdtr32
+gdtr32:
+	.word 23
+	.quad gdt32
+
+
 /*
 The linker script specifies _start as the entry point to the kernel and the
 bootloader will jump to this position once the kernel has been loaded. It
 doesn't make sense to return from this function as the bootloader is gone.
 */
 .section .text
-// .code16 // removed because multiboot puts me in 32bit mode, through I have to change things
 .global _start
 .type _start, @function
 _start:
 	cli
-	mov %eax, %edx // move multiboot header to edx
-	mov $gdtr32, %eax
-	lgdt (%eax)
-
-	mov %cr0, %eax
-	or $0x01, %eax
-	mov %eax, %cr0
-	jmp $0x08, $trampoline
 
 .code32
 trampoline:
@@ -144,13 +160,6 @@ trampoline:
 	itself. It has absolute and complete power over the
 	machine.
 	*/
-
-	/*
-	To set up a stack, we set the esp register to point to the top of the
-	stack (as it grows downwards on x86 systems). This is necessarily done
-	in assembly as languages such as C cannot function without a stack.
-	*/
-	mov $stack_top, %esp
 
 	/*
 	enable PAE and PSE
@@ -173,6 +182,13 @@ trampoline:
 	or $0x80000000, %eax
 	mov %eax, %cr0
 	*/
+
+	/*
+	To set up a stack, we set the esp register to point to the top of the
+	stack (as it grows downwards on x86 systems). This is necessarily done
+	in assembly as languages such as C cannot function without a stack.
+	*/
+	mov $stack_top, %esp
 
 	/*
 	Push the pointer to the Multiboot information structure
