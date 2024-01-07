@@ -146,43 +146,54 @@ doesn't make sense to return from this function as the bootloader is gone.
 _start:
 	cli
 
-.code32
-trampoline:
-	/*
-	The bootloader has loaded us into 32-bit protected mode on a x86
-	machine. Interrupts are disabled. Paging is disabled. The processor
-	state is as defined in the multiboot standard. The kernel has full
-	control of the CPU. The kernel can only make use of hardware features
-	and any code it provides as part of itself. There's no printf
-	function, unless the kernel provides its own <stdio.h> header and a
-	printf implementation. There are no security restrictions, no
-	safeguards, no debugging mechanisms, only what the kernel provides
-	itself. It has absolute and complete power over the
-	machine.
-	*/
+	movl %ebx, %edi
+	movl %eax, %esi
 
-	/*
-	enable PAE and PSE
-	mov %cr4, %eax
-	or $0x30, %eax // PSE bit 4, PAE bit 5
-	mov %eax, %cr4
+	/* Enable PAE and PSE
 	*/
+	movl %cr4, %eax
+	orl $(1 << 5), %eax /* PAE */
+	orl $(1 << 4), %eax /* PSE */
+	movl %eax, %cr4
 
-	/*
-	Enter long mode and NX bit(allows sections of address space to be marked as non-executable) 
-	mov $0xC0000080, %ecx
+	/* Enable long mode and the NX bit */
+	movl $0xC0000080, %ecx
 	rdmsr
-	or 0x0000000000000901, %eax // 0x100(Long mode) | 0x800(NX bit) | 0x001 (SCE[Syscall Enable] bit)
+	orl  $(0x100 | 0x800 | 0x001), %eax
 	wrmsr
-	*/
 
-	/*
-	Enable paging
+
+	/* Set cr3 to p4 of the boot page table */
+	movl $pml4, %eax
+	movl %eax, %cr3
+	
+
+	/* Enable paging */
 	mov %cr0, %eax
-	or $0x80000000, %eax
+	orl $0x80000000, %eax
 	mov %eax, %cr0
-	*/
 
+
+	/* Load the gdt */
+	movl $gdtr, %eax
+	lgdt (%eax)
+
+	movl $0x10, %eax
+	movw %ax, %ds
+	movw %ax, %ss
+
+	ljmp $0x8, $.trampoline
+
+.code64
+.trampoline:
+	movq $.next_ptr, %rax
+	movq (%rax), %rax
+	jmp *%rax
+
+.next_ptr:
+	.quad .next
+
+.next:
 	/*
 	To set up a stack, we set the esp register to point to the top of the
 	stack (as it grows downwards on x86 systems). This is necessarily done
@@ -194,8 +205,8 @@ trampoline:
 	Push the pointer to the Multiboot information structure
 	Push the magic value
 	*/
-	pushl %ebx
-	pushl %eax
+	push %rdi
+	push %rsi
 
 	/*
 	This is a good place to initialize crucial processor state before the
