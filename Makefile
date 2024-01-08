@@ -36,8 +36,12 @@ OBJS=$(KERNEL_ARCH_OBJS)\
 
 all: build-iso
 
-run:
+run-debug:
 	$(EMU) -cdrom myos.iso -s -S &# -monitor stdio
+	gdb myos.bin
+
+run:
+	$(EMU) -cdrom myos.iso
 
 .PHONY: build-iso clean
 
