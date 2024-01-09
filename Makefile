@@ -20,7 +20,7 @@ OBJS=$(KERNEL_ARCH_OBJS)\
 all: build-iso
 
 run:
-	qemu-system-i386 -kernel myos.bin
+	qemu-system-i386 -kernel myos.bin -s -S &
 
 .PHONY: build-iso clean
 
