@@ -138,6 +138,19 @@ doesn't make sense to return from this function as the bootloader is gone.
 _start:
 	cli
 
+	/* To set up a stack, we set the esp register to point to the top of the
+	stack (as it grows downwards on x86 systems). This is necessarily done
+	in assembly as languages such as C cannot function without a stack.
+	*/
+	mov $stack_top, %esp
+	mov %esp, %ebp
+
+	/* Configure VGA
+	*/
+	mov $FRAMEBUFFER_WIDTH, %edi
+	mov $FRAMEBUFFER_HEIGHT, %esi
+	call vga_config
+
 	movl %ebx, %edi
 	movl %eax, %esi
 
@@ -198,17 +211,6 @@ _start:
 	*/
 	mov %rdi, %rbx
 	mov %rsi, %rax
-
-	/* */
-	mov FRAMEBUFFER_WIDTH, %rdi
-	mov FRAMEBUFFER_HEIGHT, %rsi
-	call vga_config
-	/*
-	To set up a stack, we set the esp register to point to the top of the
-	stack (as it grows downwards on x86 systems). This is necessarily done
-	in assembly as languages such as C cannot function without a stack.
-	*/
-	mov $stack_top, %esp
 
 	/*
 	Push the pointer to the Multiboot information structure
