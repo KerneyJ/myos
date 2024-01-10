@@ -68,7 +68,7 @@ mbheader:
 	/* BEGIN TAGS */
 
 	/* framebufer */
-		framebuffer_tag_start:  
+		framebuffer_tag_start:
 			.word 5
 			.word 0
 			.long 20 # framebuffer_tag_end - framebuffer_tag_start
@@ -161,23 +161,22 @@ _start:
 	orl $(1 << 4), %eax /* PSE */
 	movl %eax, %cr4
 
-	/* Enable long mode and the NX bit */
+	/* Enable long mode and the NX bit
+	*/
 	movl $0xC0000080, %ecx
 	rdmsr
 	orl  $(0x100 | 0x800 | 0x001), %eax
 	wrmsr
 
-
-	/* Set cr3 to p4 of the boot page table */
+	/* Set cr3 to p4 of the boot page table
+	*/
 	movl $pml4, %eax
 	movl %eax, %cr3
-	
 
 	/* Enable paging */
 	mov %cr0, %eax
 	orl $0x80000000, %eax
 	mov %eax, %cr0
-
 
 	/* Load the gdt */
 	movl $gdtr, %eax
@@ -207,17 +206,12 @@ _start:
 	addq %rbx, %rax
 	lgdt (%rax)
 
-	/* Move multiboot stuff back to rbx and rax
-	*/
-	mov %rdi, %rbx
-	mov %rsi, %rax
-
 	/*
 	Push the pointer to the Multiboot information structure
 	Push the magic value
 	*/
-	push %rbx
-	push %rax
+	push %rdi
+	push %rsi
 
 	/*
 	This is a good place to initialize crucial processor state before the
@@ -239,7 +233,7 @@ _start:
 	preserved and the call is well defined.
 	*/
 	call kernel_main
- 
+
 	/*
 	If the system has nothing more to do, put the computer into an
 	infinite loop. To do that:

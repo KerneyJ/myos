@@ -1,4 +1,4 @@
-#include "arch/i386/vga.h"
+#include "arch/x86_64/vga.h"
 #include "tty.h"
 #include "string.h"
 
@@ -19,13 +19,13 @@ void term_init(void){
 	 * 5) set width
 	 * 6) set height
 	 * 7) set bits per pixel
-	 * 8) set LFB(???)
+	 * 8) set LFB(???) linear framebufer
 	 * 9) set index bank to 0
 	 * 10) flush vga by writing empty stuff to VGA
 	 */
 	term_row = 0;
 	term_column = 0;
-	term_color = vga_entry_color(VGA_COLOR_BLACK, VGA_COLOR_GREEN);
+	term_color = vga_entry_color(VGA_COLOR_BLUE , VGA_COLOR_LIGHT_GREY);
 	term_buffer = (uint16_t*) 0xB8000;
 	for (size_t y = 0; y < VGA_HEIGHT; y++){
 		for(size_t x = 0; x < VGA_WIDTH; x++){
