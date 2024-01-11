@@ -151,8 +151,8 @@ _start:
 	mov $FRAMEBUFFER_HEIGHT, %esi
 	call vga_config
 
-	movl %ebx, %edi
-	movl %eax, %esi
+	movl %eax, %edi
+	movl %ebx, %esi
 
 	/* Enable PAE and PSE
 	*/
@@ -205,13 +205,6 @@ _start:
 	movq $gdtr, %rax
 	addq %rbx, %rax
 	lgdt (%rax)
-
-	/*
-	Push the pointer to the Multiboot information structure
-	Push the magic value
-	*/
-	push %rdi
-	push %rsi
 
 	/*
 	This is a good place to initialize crucial processor state before the
