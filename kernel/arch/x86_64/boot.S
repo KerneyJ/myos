@@ -239,9 +239,10 @@ _start:
 	3) Jump to the hlt instruction if it ever wakes up due to a
 	   non-maskable interrupt occurring or due to system management mode.
 	*/
+.panic:
 	cli
-1:	hlt
-	jmp 1b
+	hlt
+	jmp .panic
  
 /*
 Set the size of the _start symbol to the current location '.' minus its start.
