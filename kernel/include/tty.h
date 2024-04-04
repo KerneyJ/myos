@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include "arch/i386/vga.h"
 
 void term_init(void);
 void term_setcolor(uint8_t color);

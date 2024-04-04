@@ -32,10 +32,16 @@ void printf(const char* restrict format, ...){
 					break;
 			}
 		}
-        else if(*format == '\n')
-		    term_newln();
+		else if(*format == '\n')
+			term_newln();
+		else if(*format == '\r') // maps to red
+			term_setcolor(VGA_COLOR_RED);
+		else if(*format == '\v') // maps to light red
+			term_setcolor(VGA_COLOR_LIGHT_RED);
+		else if(*format == '\t') // maps to white
+			term_setcolor(VGA_COLOR_WHITE);
 		else
-		    term_putchar(*format);		
-	    format++;
+			term_putchar(*format);
+		format++;
 	}
 }

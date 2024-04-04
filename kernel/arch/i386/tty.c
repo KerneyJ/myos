@@ -1,4 +1,3 @@
-#include "arch/i386/vga.h"
 #include "tty.h"
 #include "string.h"
 
@@ -13,7 +12,7 @@ uint16_t* term_buffer;
 void term_init(void){
     term_row = 0;
 	term_column = 0;
-	term_color = vga_entry_color(VGA_COLOR_GREEN, VGA_COLOR_BLACK);
+	term_color = vga_entry_color(VGA_COLOR_RED, VGA_COLOR_BLACK);
 	term_buffer = (uint16_t*) 0xB8000;
 	for (size_t y = 0; y < VGA_HEIGHT; y++){
 		for(size_t x = 0; x < VGA_WIDTH; x++){
@@ -24,7 +23,8 @@ void term_init(void){
 }
 
 void term_setcolor(uint8_t color){
-    term_color = color;
+	uint8_t background = term_color & 0xf0;
+	term_color = color | background;
 }
 
 void term_putat(char c, uint8_t color, size_t x, size_t y){
