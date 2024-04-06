@@ -4,7 +4,7 @@ architecture options
   - x86\_64
   - i386
 # Run
-make run
+make ARCH=architecture run
 # Notes:
 * allocate a stack for each cpu and then point each CPUs stack pointer to those different  
 * flush TLB after every page table after context switch
