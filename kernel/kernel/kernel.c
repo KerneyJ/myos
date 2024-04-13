@@ -75,7 +75,6 @@ void* mbt_fb(struct multiboot_tag* tag){
 	struct multiboot_tag_framebuffer *tagfb = (struct multiboot_tag_framebuffer *) tag;
 	void *fb = (void *)tagfb->common.framebuffer_addr;
 
-	breakpoint();
 	switch (tagfb->common.framebuffer_type){
 		case MULTIBOOT_FRAMEBUFFER_TYPE_INDEXED:
 			{
@@ -134,13 +133,22 @@ void* mbt_fb(struct multiboot_tag* tag){
 				break;
 			case 32:
 				{
+					/* FIXME for some reason this framebuffer address is bad
+					 * Exit happens around here
+					 *    0x00000000000044fd <+189>:   imul   0x10(%rdi),%ecx
+					 *    0x0000000000004501 <+193>:   lea    0x0(,%rdx,4),%eax
+					 *    0x0000000000004508 <+200>:   add    %r8,%rcx
+					 *    0x000000000000450b <+203>:   mov    %esi,(%rcx,%rax,1)
+					 * where r8 stores fb which is eventually moved into rcx; and esi has the color value
+					 * the final mov instruction places the color in pixel essentially
+					 */
+					breakpoint();
 					multiboot_uint32_t *pixel = fb + tagfb->common.framebuffer_pitch * i + 4 * i;
 					*pixel = color;
 				}
 				break;
 		}
 	}
-	breakpoint();
 	return fb;
 }
 
@@ -162,11 +170,9 @@ void kernel_main(uint32_t magic, uint32_t addr){
 	if (addr & 7) // unaligned multiboot info struct
 		goto failure;
 
-	breakpoint();
 	size = *(unsigned *) addr;
 	for (tag = (struct multiboot_tag *) (addr + 8); tag->type != MULTIBOOT_TAG_TYPE_END;
 		tag = (struct multiboot_tag *) ((multiboot_uint8_t *) tag + ((tag->size + 7) & ~7))){
-		breakpoint();
 		switch (tag->type){
 			case MULTIBOOT_TAG_TYPE_CMDLINE:
 				mbt_cmdline(tag); // no triple fault 1st
@@ -192,7 +198,6 @@ void kernel_main(uint32_t magic, uint32_t addr){
 		}
 	}
 
-//	breakpoint();
 	uint16_t* fba = (uint16_t *)fb;
 	for(int i = 0; i < 80; i++){
 		for(int j = 0; j < 25; j++){
