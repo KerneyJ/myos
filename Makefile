@@ -1,13 +1,14 @@
-KERNELDIR=kernel/kernel
-INCLUDEDIR=kernel/include
-LIBDIR=kernel/lib
+SRC=src
+KERNELDIR=$(SRC)/kernel
+INCLUDEDIR=$(SRC)/include
+LIBDIR=$(SRC)/lib
 
 CFLAGS=-std=gnu99 -ffreestanding -O2 -Wall -Wextra
 LDFLAGS=-ffreestanding -O2 -nostdlib -lgcc
 GRUB=grub-mkrescue
 
 ifeq ($(ARCH), i386)
-	ARCHDIR=kernel/arch/i386
+	ARCHDIR=$(SRC)/arch/i386
 	AS=cross/bin/i686-elf-as
 	CC=cross/bin/i686-elf-gcc
 	LD=cross/bin/i686-elf-ld
@@ -15,7 +16,7 @@ ifeq ($(ARCH), i386)
 endif
 
 ifeq ($(ARCH), x86_64)
-	ARCHDIR=kernel/arch/x86_64
+	ARCHDIR=$(SRC)/arch/x86_64
 	AS=cross/bin/x86_64-elf-as
 	CC=cross/bin/x86_64-elf-gcc
 	LD=cross/bin/x86_64-elf-ld
@@ -63,6 +64,6 @@ myos.bin: $(OBJS)
 	$(AS) -c $^ -o $@
 
 clean:
-	rm kernel/*/*.o
-	rm kernel/*/*/*.o
+	rm $(SRC)/*/*.o
+	rm $(SRC)/*/*/*.o
 	rm myos.*
