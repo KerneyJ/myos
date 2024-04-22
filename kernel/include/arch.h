@@ -1,2 +1,3 @@
-// TODO probably do an architecture check
-int setup_arch();
+#ifdef CONFIG_x86_64
+#include "arch/x86_64/idt.h"
+#endif

@@ -2,7 +2,7 @@
 #include "stdio.h"
 #include "tty.h"
 #include "vm.h"
-#include "arch/x86_64/idt.h"
+#include "arch.h"
 
 uint32_t breakpoint_calls = 0;
 

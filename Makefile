@@ -54,7 +54,7 @@ myos.bin: $(OBJS)
 	$(CC) -o $@ -T $(ARCHDIR)/linker.ld $(LDFLAGS) $(OBJS)
 
 %.o: %.c
-	$(CC) -c $^ $(CFLAGS) -o $@ -isystem $(INCLUDEDIR)
+	$(CC) -c $^ $(CFLAGS) -o $@ -isystem $(INCLUDEDIR) -D CONFIG_$(ARCH)
 
 %.o: %.S
 	$(CC) -c $^ -o $@ -isystem $(INCLUDEDIR)
