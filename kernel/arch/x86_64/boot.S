@@ -146,10 +146,10 @@ _start:
 	mov %esp, %ebp
 
 	/* Configure VGA
-	*/
 	mov $FRAMEBUFFER_WIDTH, %edi
 	mov $FRAMEBUFFER_HEIGHT, %esi
 	call vga_config
+	*/
 
 	movl %eax, %edi
 	movl %ebx, %esi
@@ -165,7 +165,7 @@ _start:
 	*/
 	movl $0xC0000080, %ecx
 	rdmsr
-	orl  $(0x100 | 0x800 | 0x001), %eax
+	orl $(0x100 | 0x800 | 0x001), %eax
 	wrmsr
 
 	/* Set cr3 to p4 of the boot page table

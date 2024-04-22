@@ -2,7 +2,7 @@
 #include "stdio.h"
 #include "tty.h"
 #include "vm.h"
-#include "arch.h"
+#include "arch/x86_64/idt.h"
 
 uint32_t breakpoint_calls = 0;
 
@@ -169,6 +169,8 @@ void kernel_main(uint32_t magic, uint32_t addr){
 
 	if (addr & 7) // unaligned multiboot info struct
 		goto failure;
+
+	idt_init();
 
 	size = *(unsigned *) addr;
 	for (tag = (struct multiboot_tag *) (addr + 8); tag->type != MULTIBOOT_TAG_TYPE_END;
