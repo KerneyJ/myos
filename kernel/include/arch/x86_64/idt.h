@@ -17,4 +17,6 @@ typedef struct {
 
 void idt_init(void);
 void idt_set_descriptor(uint8_t vector, void* isr, uint8_t flags);
+void clr_interrupt(void);
+void set_interrupt(void);
 void exception_handler(void) __attribute__((noreturn));

@@ -170,6 +170,10 @@ void kernel_main(uint32_t magic, uint32_t addr){
 	if (addr & 7) // unaligned multiboot info struct
 		goto failure;
 
+	/*TODO
+	 * set_interrupts to turn on interrupts just a wrapper around sti
+	 * clr_interrupts to turn off interrupts just a wrapper around cli
+	 */
 	idt_init();
 
 	size = *(unsigned *) addr;
