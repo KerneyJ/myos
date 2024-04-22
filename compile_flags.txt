@@ -1,2 +1,2 @@
 -I
-./kernel/include
+./src/include
