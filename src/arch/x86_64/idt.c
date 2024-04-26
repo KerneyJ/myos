@@ -28,13 +28,13 @@ void idt_set_descriptor(uint8_t vector, void* isr, uint8_t flags) {
 
 	descriptor->isr_low			= (uint64_t)isr & 0xFFFF;
 	descriptor->kernel_cs		= 0x08;
-	descriptor->ist				= 0;
+	descriptor->ist				= 0; // TODO depending on the value of this gate we can get rsp rip rflags error code ss and cs
 	descriptor->attributes		= flags;
 	descriptor->isr_mid			= ((uint64_t)isr >> 16) & 0xFFFF;
 	descriptor->isr_high		= ((uint64_t)isr >> 32) & 0xFFFFFFFF;
 	descriptor->reserved		= 0;
 }
 
-void exception_handler(void) {
+void exception_handler(ist_t ist, cpu_state_t cpu) {
 	__asm__ volatile ("cli; hlt"); // Completely hangs the computer
 }
