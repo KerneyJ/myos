@@ -66,4 +66,4 @@ myos.bin: $(OBJS)
 clean:
 	rm $(SRC)/*/*.o
 	rm $(SRC)/*/*/*.o
-	rm myos.*
+	rm *.bin
