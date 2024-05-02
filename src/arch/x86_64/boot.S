@@ -82,6 +82,7 @@ mbheader:
 	.long 0, 0
 	.long 8
 .hdr_end:
+
 /*
 The multiboot standard does not define the value of the stack pointer register
 (esp) and it is up to the kernel to provide a stack. This allocates room for a
@@ -138,14 +139,7 @@ doesn't make sense to return from this function as the bootloader is gone.
 _start:
 	cli
 
-	/* To set up a stack, we set the esp register to point to the top of the
-	stack (as it grows downwards on x86 systems). This is necessarily done
-	in assembly as languages such as C cannot function without a stack.
-	*/
-	mov $stack_top, %esp
-	mov %esp, %ebp
-
-	/* Configure VGA
+	/* Configure VGA TODO did not work to setup vga will in 32bit so probably remove
 	mov $FRAMEBUFFER_WIDTH, %edi
 	mov $FRAMEBUFFER_HEIGHT, %esi
 	call vga_config
@@ -225,6 +219,14 @@ _start:
 	stack since (pushed 0 bytes so far), so the alignment has thus been
 	preserved and the call is well defined.
 	*/
+
+	/* To set up a stack, we set the esp register to point to the top of the
+	stack (as it grows downwards on x86 systems). This is necessarily done
+	in assembly as languages such as C cannot function without a stack.
+	*/
+	movq $stack_top, %rsp
+	movq %rsp, %rbp
+
 	call kernel_main
 
 	/*
