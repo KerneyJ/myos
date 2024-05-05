@@ -14,8 +14,6 @@ typedef struct {
 } __attribute__((packed)) idt_entry_t;
 
 typedef struct {
-	uint64_t ss;
-	uint64_t rsp;
 	union {
 		struct {
 			uint64_t carry : 1;
@@ -46,6 +44,7 @@ typedef struct {
 	uint64_t cs;
 	uint64_t rip;
 	uint64_t err;
+	uint64_t smth; // idk what is at the bottom
 } __attribute__((packed)) ist_t;
 
 typedef struct {
@@ -57,4 +56,4 @@ void idt_init(void);
 void idt_set_descriptor(uint8_t vector, void* isr, uint8_t flags);
 void clr_interrupt(void);
 void set_interrupt(void);
-void exception_handler(ist_t ist, cpu_state_t cpu) __attribute__((noreturn));
+void exception_handler(ist_t ist /*, cpu_state_t cpu*/ ) __attribute__((noreturn));

@@ -35,6 +35,6 @@ void idt_set_descriptor(uint8_t vector, void* isr, uint8_t flags) {
 	descriptor->reserved		= 0;
 }
 
-void exception_handler(ist_t ist, cpu_state_t cpu) {
+void exception_handler(ist_t ist /*, cpu_state_t cpu */) {
 	__asm__ volatile ("cli; hlt"); // Completely hangs the computer
 }
