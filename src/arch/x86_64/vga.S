@@ -1,12 +1,10 @@
 // outw port, value
-.code32
+.code64
 .global vga_config
 vga_config:
 	// %edi has width, %esi has height
 	// mov $0x01CE, %edx // VBE index port
 	// mov $0x01CF, %eax // VBE data port
-	push %eax
-	push %edx
 
 	// Disable VBE
 	mov $0x01CE, %ax
@@ -60,6 +58,4 @@ vga_config:
 	mov $0x01CF, %ax
 	outw %ax, $0x0
 
-	pop %edx
-	pop %eax
 	ret
