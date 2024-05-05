@@ -4,10 +4,6 @@
 #include "vm.h"
 #include "arch.h"
 
-uint32_t breakpoint_calls = 0;
-
-void breakpoint() __attribute__((noinline));
-void end() __attribute__((noinline));
 void mbt_cmdline(struct multiboot_tag* tag) __attribute__((noinline));
 void mbt_blname(struct multiboot_tag* tag) __attribute__((noinline));
 void mbt_module(struct multiboot_tag* tag) __attribute__((noinline));
@@ -15,14 +11,6 @@ void mbt_bootdev(struct multiboot_tag* tag) __attribute__((noinline));
 void mbt_bmeminfo(struct multiboot_tag* tag) __attribute__((noinline));
 void mbt_mmap(struct multiboot_tag* tag) __attribute__((noinline));
 void* mbt_fb(struct multiboot_tag* tag) __attribute__((noinline));
-
-void breakpoint(){
-	breakpoint_calls++;
-}
-
-void end(){
-	breakpoint_calls++;
-}
 
 void mbt_cmdline(struct multiboot_tag* tag){
 	printf ("Command line = %s\n", ((struct multiboot_tag_string *) tag)->string);
@@ -108,7 +96,6 @@ void* mbt_fb(struct multiboot_tag* tag){
 			color = 0xffffffff;
 			break;
 	}
-	breakpoint();
 
 	for (i = 0; i < tagfb->common.framebuffer_width && i < tagfb->common.framebuffer_height; i++){
 		switch (tagfb->common.framebuffer_bpp){
@@ -142,7 +129,6 @@ void* mbt_fb(struct multiboot_tag* tag){
 					 * where r8 stores fb which is eventually moved into rcx; and esi has the color value
 					 * the final mov instruction places the color in pixel essentially
 					 */
-					breakpoint();
 					multiboot_uint32_t *pixel = fb + tagfb->common.framebuffer_pitch * i + 4 * i;
 					*pixel = color;
 				}
@@ -207,8 +193,6 @@ void kernel_main(uint32_t magic, uint32_t addr){
 			fba[index] = 'C';
 		}
 	}
-	end();
-	printf("Number of calls to breakpoints %i\n", breakpoint_calls);
 	return; // jump out of kernl_main to scheduler
 
 failure:
