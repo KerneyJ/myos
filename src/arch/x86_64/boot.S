@@ -10,7 +10,7 @@
 .equ PG_PRESENT, 0x1
 .equ PG_WRITABLE, 0x2
 .equ PG_USER, 0x4
-.equ PG_BIG, 0x80
+.equ PG_BIG, 0x80 // For 2 MiB pages
 .equ PG_NO_EXEC, 0x8000000000000000
 .equ LOG_TABLE_SIZE, 9
 .equ LOG_PAGE_SIZE, 12
@@ -21,13 +21,8 @@
 .equ FRAMEBUFFER_WIDTH, 80
 .equ FRAMEBUFFER_HEIGHT, 25
 
-/*
-Declare a multiboot header that marks the program as a kernel. These are magic
-values that are documented in the multiboot standard. The bootloader will
-search for this signature in the first 8 KiB of the kernel file, aligned at a
-32-bit boundary. The signature is in its own section so the header can be
-forced to be within the first 8 KiB of the kernel file.
-*/
+.section .data
+.code64
 .align PAGE_SIZE
 .global pml4
 pml4:
@@ -40,25 +35,21 @@ pml4:
 		.quad 0
 	.endr
 
-pml3:
+pml3: // 512 GiB
 	.quad (pml2 + PG_PRESENT + PG_WRITABLE)
 	.rept 511
 		.quad 0
 	.endr
 
-pml2:
-	.set pg, 0
-	.rept 512
-		.quad (pg + PG_PRESENT + PG_BIG + PG_WRITABLE)
-		.set pg, pg + (1 << (LOG_TABLE_SIZE + LOG_PAGE_SIZE))
+pml2: /* with big pages this maps 1 GiB */
+	.quad (PG_PRESENT + PG_BIG + PG_WRITABLE)
+	.rept 511
+		.quad 0
 	.endr
 
-.code32
 .section multiboot
 .align 8
-
 .global mbheader
-
 mbheader:
 	.long 0xe85250d6
 	.long 0
@@ -96,7 +87,7 @@ stack is properly aligned and failure to align the stack will result in
 undefined behavior.
 */
 .section .bss
-.align 16
+.align STACK_ALIGN
 stack_bottom:
 .skip 16384 # 16 KiB
 stack_top:
@@ -133,17 +124,12 @@ The linker script specifies _start as the entry point to the kernel and the
 bootloader will jump to this position once the kernel has been loaded. It
 doesn't make sense to return from this function as the bootloader is gone.
 */
+.code32
 .section .text
 .global _start
 .type _start, @function
 _start:
 	cli
-
-	/* Configure VGA TODO did not work to setup vga will in 32bit so probably remove
-	mov $FRAMEBUFFER_WIDTH, %edi
-	mov $FRAMEBUFFER_HEIGHT, %esi
-	call vga_config
-	*/
 
 	movl %eax, %edi
 	movl %ebx, %esi
