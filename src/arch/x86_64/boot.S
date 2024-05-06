@@ -42,12 +42,8 @@ pml3: // 512 GiB
 	.endr
 
 pml2: /* with big pages this maps 1 GiB */
-	.set pg, 0
-	.rept 2
-		.quad (pg + PG_PRESENT + PG_BIG + PG_WRITABLE)
-		.set pg, pg + (1 << (LOG_TABLE_SIZE + LOG_PAGE_SIZE)
-	.endr
-	.rept 510
+	.quad (PG_PRESENT + PG_BIG + PG_WRITABLE)
+	.rept 511
 		.quad 0
 	.endr
 
