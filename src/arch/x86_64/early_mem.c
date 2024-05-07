@@ -1,7 +1,7 @@
 #include "arch/x86_64/early_mem.h"
 
-/* from 0x200000 + 4* PAGE_SIZE to 0x400000 + 4 * PAGE_SIZE */
-uint64_t *page_bitmap = (uint64_t *)(MEM_BASE + 4 * PAGE_SIZE);
+/* from 0x200000 + 6 * PAGE_SIZE to 0x400000 + 6 * PAGE_SIZE */
+uint64_t *page_bitmap = (uint64_t *)(MEM_BASE + 6 * PAGE_SIZE);
 
 uint64_t earlymem_init(){ /* FIXME */
 	/* initialize the page_bitmap to 0
@@ -31,23 +31,35 @@ uint64_t earlymem_init(){ /* FIXME */
 	new_pml2[1] = (uint64_t)pml1_base + PAGE_SIZE + PG_PRESENT + PG_WRITABLE;
 	new_pml2[2] = (uint64_t)pml1_base + 2*PAGE_SIZE + PG_PRESENT + PG_WRITABLE;
 	for(uint64_t i = 0; i < 3 * TABLE_SIZE; i++)
-		pml1_base[i] = 0x0; /* 0 out page table entries for the first 2 MiB*/
+		pml1_base[i] = 0x0;
 
 	/* populate both pml1s
 	 * assume that _kernel_end provided by linker scripter is page aligned
 	 * map the kernel pages into the page tables
-	 * for some reason _kernel_end(provided by linker) value is cooked; will just give kernel 16 pages*/
+	 * for some reason _kernel_end(provided by linker) value is cooked; will just give kernel 16 pages */
 	for(uint64_t i = 0; i < 16; i++)
 		pml1_base[i] = (i * PAGE_SIZE) + PG_PRESENT + PG_WRITABLE;
 
-	/* map the page tables and bitmap pages into the page tables */
-	/* memory information is located at 0x200000 to 0x404000*/
+	/* map the page tables and bitmap pages into the page tables
+	 * memory information is located at 0x200000 to 0x404000*/
 	uint64_t base_index = MEM_BASE / PAGE_SIZE;
-	for(uint64_t i = 0; i < TABLE_SIZE + 4; i++){
+	for(uint64_t i = 0; i < TABLE_SIZE + 6; i++)
 		pml1_base[i+base_index] = MEM_BASE + (i * PAGE_SIZE) + PG_PRESENT + PG_WRITABLE;
+
+	/* setup the bitmap
+	 * First mark the first 16 pages
+	 * Last mark the bits for pages 0x200000 to 0x406000 */
+	page_bitmap[0] = 0xffff;
+	base_index = (MEM_BASE / PAGE_SIZE) / 64;
+	for(uint64_t i = base_index; i < (TABLE_SIZE / 64) + base_index; i++){
+		page_bitmap[i] = 0xffffffffffffffff;
 	}
+	page_bitmap[base_index + (TABLE_SIZE / 64)] = 0x3f;
 
 	swap_pagetables((uint64_t)new_pml4);
+	pml4 = new_pml4;
+	pml3 = new_pml3;
+	pml2 = new_pml2;
 	return 0;
 }
 
