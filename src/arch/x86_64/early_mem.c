@@ -1,14 +1,53 @@
 #include "arch/x86_64/early_mem.h"
 
-uint64_t init_earlymem(){
+/* from 0x200000 + 4* PAGE_SIZE to 0x400000 + 4 * PAGE_SIZE */
+uint64_t *page_bitmap = (uint64_t *)(MEM_BASE + 4 * PAGE_SIZE);
+
+uint64_t earlymem_init(){ /* FIXME */
 	/* initialize the page_bitmap to 0
-	 * to map 512 GiB(size of pml3) is 4096 uint64_t */
-	for(uint64_t i = 0; i < 4096; i++){
-		page_bitmap[i] = 0;
+	 * to map 512 GiB(size of pml3) is 4096 uint64_t
+	 * mark first 2 pages as allocated(since they were allocated in boot.S)
+	 */
+	uint64_t *new_pml4, *new_pml3, *new_pml2;
+	new_pml4 = (uint64_t*)MEM_BASE; // set pml4 to 2 MiB
+	new_pml3 = (uint64_t*)(MEM_BASE + PAGE_SIZE);
+	new_pml2 = (uint64_t*)(MEM_BASE + 2 * PAGE_SIZE);
+	for(uint64_t i = 0; i < TABLE_SIZE; i++)
+		new_pml4[i] = 0x0;
+
+	new_pml4[0] = (uint64_t)new_pml3 + PG_PRESENT + PG_WRITABLE;
+	new_pml4[272] = (uint64_t)new_pml3 + PG_PRESENT + PG_WRITABLE;
+
+	for(uint64_t i = 0; i < TABLE_SIZE; i++)
+		new_pml3[i] = 0x0;
+
+	new_pml3[0] = (uint64_t)new_pml2 + PG_PRESENT + PG_WRITABLE;
+
+	for(uint64_t i = 0; i < TABLE_SIZE; i++)
+		new_pml2[i] = 0x0;
+
+	uint64_t *pml1_base = (uint64_t *)(MEM_BASE + 3 * PAGE_SIZE);
+	new_pml2[0] = (uint64_t)pml1_base + PG_PRESENT + PG_WRITABLE;
+	new_pml2[1] = (uint64_t)pml1_base + PAGE_SIZE + PG_PRESENT + PG_WRITABLE;
+	new_pml2[2] = (uint64_t)pml1_base + 2*PAGE_SIZE + PG_PRESENT + PG_WRITABLE;
+	for(uint64_t i = 0; i < 3 * TABLE_SIZE; i++)
+		pml1_base[i] = 0x0; /* 0 out page table entries for the first 2 MiB*/
+
+	/* populate both pml1s
+	 * assume that _kernel_end provided by linker scripter is page aligned
+	 * map the kernel pages into the page tables
+	 * for some reason _kernel_end(provided by linker) value is cooked; will just give kernel 16 pages*/
+	for(uint64_t i = 0; i < 16; i++)
+		pml1_base[i] = (i * PAGE_SIZE) + PG_PRESENT + PG_WRITABLE;
+
+	/* map the page tables and bitmap pages into the page tables */
+	/* memory information is located at 0x200000 to 0x404000*/
+	uint64_t base_index = MEM_BASE / PAGE_SIZE;
+	for(uint64_t i = 0; i < TABLE_SIZE + 4; i++){
+		pml1_base[i+base_index] = MEM_BASE + (i * PAGE_SIZE) + PG_PRESENT + PG_WRITABLE;
 	}
 
-	/* mark first 2 pages as allocated(since they were allocated in boot.S) */
-	page_bitmap[0] = 0x3;
+	swap_pagetables((uint64_t)new_pml4);
 	return 0;
 }
 
@@ -20,13 +59,13 @@ uint64_t alloc_page_earlymem(){
 				break;
 		}
 	}
-	return PG_SIZE * (index * 64 + bit);// the base physical address of the page
+	return PAGE_SIZE * (index * 64 + bit);// the base physical address of the page
 }
 
 uint64_t free_page_earlymem(uint64_t paddr){
 	uint64_t index, bit;
-	index = (paddr / PG_SIZE) / 64;
-	bit = (paddr / PG_SIZE) % 64;
+	index = (paddr / PAGE_SIZE) / 64;
+	bit = (paddr / PAGE_SIZE) % 64;
 	page_bitmap[index] = page_bitmap[index] & ~(1 << bit);
 	return 0;
 }

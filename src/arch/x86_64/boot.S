@@ -35,15 +35,21 @@ pml4:
 		.quad 0
 	.endr
 
+.global pml3
 pml3: // 512 GiB
 	.quad (pml2 + PG_PRESENT + PG_WRITABLE)
 	.rept 511
 		.quad 0
 	.endr
 
+.global pml2
 pml2: /* with big pages this maps 1 GiB */
-	.quad (PG_PRESENT + PG_BIG + PG_WRITABLE)
-	.rept 511
+	.set pg, 0
+	.rept 3
+		.quad (pg + PG_PRESENT + PG_BIG + PG_WRITABLE)
+		.set pg, pg + (1 << (LOG_TABLE_SIZE + LOG_PAGE_SIZE))
+	.endr
+	.rept 509
 		.quad 0
 	.endr
 

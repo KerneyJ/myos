@@ -36,8 +36,6 @@ SECTIONS
 		*(.data)
 	}
 
-	/* paging data */
-
 	/* Read-write data (uninitialized) and stack */
 	.bss BLOCK(4K) : ALIGN(4K)
 	{
@@ -45,7 +43,7 @@ SECTIONS
 		*(.bss)
 	}
 
-	PROVIDE(_kernel_end = .);
+	PROVIDE(kernel_end = .);
  
 	/* The compiler may produce other sections, by default it will put them in
 	   a segment with the same name. Simply add stuff here as needed. */
