@@ -43,7 +43,7 @@ pml3: // 512 GiB
 	.endr
 
 .global pml2
-pml2: /* with big pages this maps 1 GiB */
+pml2: // 1 GiB
 	.set pg, 0
 	.rept 3
 		.quad (pg + PG_PRESENT + PG_BIG + PG_WRITABLE)
