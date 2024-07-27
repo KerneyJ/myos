@@ -3,21 +3,50 @@
 /* from 0x200000 + 6 * PAGE_SIZE to 0x400000 + 6 * PAGE_SIZE 
  * Maps tracks first 512 GiB in of address space*/
 uint64_t *page_bitmap = (uint64_t *)(MEM_BASE + 6 * PAGE_SIZE);
+uint64_t page_bitmap_size = 0;
+uint64_t *earlymem_pt = 0;
 
 uint64_t earlymem_init(){
     // Zero out the bitmap
-    for(int i = 0; i < 32768; i++)
+    page_bitmap_size = BITMAP_ENTRIES * BITMAP_ENTRY_SIZE; 
+    for(uint64_t i = 0; i < page_bitmap_size; i++)
         page_bitmap[i] = 0;
 
-    // Mark up to 0x406000 as used in bitmap
-    for(int i = 0; i < 16; i++)
+    // Mark up to 0x800000 as used in bitmap
+    for(int i = 0; i < 32; i++)
         page_bitmap[i] = 0xffffffffffffffff;
-    page_bitmap[16] = 0x3f;
-    /* map page for the framebuffer */
-    /* return map_page_earlymem(0xfd000000, 0, 0); */
-    uint64_t page = alloc_page_earlymem();
-    page_bitmap[19] = page;
+
+    // pre-allocate a page table for future page tables
+    // This maps from 0x600000 to 0x7fffff
+    uint64_t* pd =  (uint64_t*)(&pml2);
+    uint64_t* pt = page_bitmap + page_bitmap_size; // right after the bitmap
+    for(int i = 0; i < TABLE_SIZE; i++)
+        pt[i] = 0; // zero out every entry;
+    pd[3] = (uint64_t)pt + PG_PRESENT + PG_WRITABLE;
+    earlymem_pt = pt;
+
+    // map page for the framebuffer
+    uint64_t fb_addr = 0xfd000000;
+    uint64_t paddr = alloc_page_earlymem();
+    map_page_earlymem(fb_addr, paddr, PG_WRITABLE);
     return 0;
+}
+
+uint64_t alloc_pagetable_earlymem(){
+    if(earlymem_pt == 0)
+        return 0; // in future panic
+
+    uint64_t* pt_addr;
+    for(int i = 0; i < TABLE_SIZE; i++){
+        if(!(earlymem_pt[i] & PG_PRESENT)){
+            pt_addr = (uint64_t*)((i * PAGE_SIZE) + EARLY_PT_BASE);
+            earlymem_pt[i] = (uint64_t)pt_addr + PG_PRESENT + PG_WRITABLE;
+            for(int j = 0; j < TABLE_SIZE; j++)
+                pt_addr[j] = 0;
+            return pt_addr;
+        }
+    }
+    return 0; // in future panic
 }
 
 uint64_t alloc_page_earlymem(){
@@ -50,6 +79,7 @@ uint64_t alloc_page_earlymem(){
 
     // mark that page as used
     page_bitmap[index] |= mask;
+
     return (index * 64 + pos) * PAGE_SIZE; // the base physical address of the page
 }
 
@@ -62,26 +92,33 @@ uint64_t free_page_earlymem(uint64_t paddr){
 }
 
 uint64_t map_page_earlymem(uint64_t vaddr, uint64_t paddr, uint64_t flags){
-    // writing stuff to page_bitmap[24] for debuging
     uint64_t pml4_index = (vaddr >> 39) & 0x1ff;
     uint64_t pml3_index = (vaddr >> 30) & 0x1ff;
     uint64_t pml2_index = (vaddr >> 21) & 0x1ff;
     uint64_t pml1_index = (vaddr >> 12) & 0x1ff;
     uint64_t *pml;
 
-    pml = (uint64_t*)((uint64_t)pml4 & 0xfffffffff000);
+    pml = (uint64_t*)&pml4;
     if(!(pml[pml4_index] & PG_PRESENT))
         return -1; // means we are trying to allocate memory very high in the address space say no for now, but maybe later
 
-    pml = (uint64_t*)((uint64_t)pml3 & 0xfffffffff000);
+    pml = (uint64_t*)&pml3;
     if(!(pml[pml3_index] & PG_PRESENT)){
-        uint64_t temp_paddr = alloc_page_earlymem();
-        return 3;
+        uint64_t* pml2 = alloc_pagetable_earlymem();
+        uint64_t* pml1 = alloc_pagetable_earlymem();
+        pml[pml3_index] = (uint64_t)pml2 + PG_WRITABLE + PG_PRESENT;
+        pml2[pml2_index] = (uint64_t)pml1 + PG_WRITABLE + PG_PRESENT;
+        pml1[pml1_index] = paddr + PG_PRESENT + (flags &0xfff);
+        return 0;
     }
 
-    pml = (uint64_t*)((uint64_t)pml2 & 0xfffffffff000);
-    if(!(pml[pml2_index] & PG_PRESENT))
-        return 2;
+    pml = (uint64_t*)&pml2;
+    if(!(pml[pml2_index] & PG_PRESENT)){
+        uint64_t* pml1 = alloc_pagetable_earlymem();
+        pml[pml2_index] = pml1 + PG_WRITABLE + PG_PRESENT;
+        pml1[pml1_index] = paddr + PG_PRESENT + (flags &0xfff);
+        return 0;
+    }
 
     return 0;
 }
