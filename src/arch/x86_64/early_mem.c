@@ -29,6 +29,9 @@ uint64_t earlymem_init(){
     uint64_t fb_addr = 0xfd000000;
     uint64_t paddr = alloc_page_earlymem();
     map_page_earlymem(fb_addr, paddr, PG_WRITABLE);
+
+    paddr = alloc_page_earlymem();
+    map_page_earlymem(fb_addr + PAGE_SIZE, paddr, PG_WRITABLE);
     return 0;
 }
 
@@ -92,6 +95,7 @@ uint64_t free_page_earlymem(uint64_t paddr){
 }
 
 uint64_t map_page_earlymem(uint64_t vaddr, uint64_t paddr, uint64_t flags){
+    // need to rework this make it more modular
     uint64_t pml4_index = (vaddr >> 39) & 0x1ff;
     uint64_t pml3_index = (vaddr >> 30) & 0x1ff;
     uint64_t pml2_index = (vaddr >> 21) & 0x1ff;
@@ -102,23 +106,31 @@ uint64_t map_page_earlymem(uint64_t vaddr, uint64_t paddr, uint64_t flags){
     if(!(pml[pml4_index] & PG_PRESENT))
         return -1; // means we are trying to allocate memory very high in the address space say no for now, but maybe later
 
-    pml = (uint64_t*)&pml3;
+    pml = (uint64_t*)(pml[pml4_index] & (~0xfff));
     if(!(pml[pml3_index] & PG_PRESENT)){
         uint64_t* pml2 = alloc_pagetable_earlymem();
         uint64_t* pml1 = alloc_pagetable_earlymem();
         pml[pml3_index] = (uint64_t)pml2 + PG_WRITABLE + PG_PRESENT;
         pml2[pml2_index] = (uint64_t)pml1 + PG_WRITABLE + PG_PRESENT;
-        pml1[pml1_index] = paddr + PG_PRESENT + (flags &0xfff);
+        pml1[pml1_index] = paddr + PG_PRESENT + (flags & 0xfff);
         return 0;
     }
 
-    pml = (uint64_t*)&pml2;
+    pml = (uint64_t*)(pml[pml3_index] & (~0xfff)); // FIXME check if for PG_BIG Flag
     if(!(pml[pml2_index] & PG_PRESENT)){
         uint64_t* pml1 = alloc_pagetable_earlymem();
-        pml[pml2_index] = pml1 + PG_WRITABLE + PG_PRESENT;
-        pml1[pml1_index] = paddr + PG_PRESENT + (flags &0xfff);
+        pml[pml2_index] = (uint64_t)pml1 + PG_WRITABLE + PG_PRESENT;
+        pml1[pml1_index] = paddr + PG_PRESENT + (flags & 0xfff);
         return 0;
     }
 
-    return 0;
+    pml = (uint64_t*)(pml[pml2_index] & (~0xfff));
+    if(!(pml[pml1_index] & PG_PRESENT)){
+        pml[pml1_index] = paddr + PG_PRESENT + (flags & 0xfff);
+        return 0;
+    }
+    else{
+        // FIXME gotta do something cause that means this page is already mapped
+        return -1;
+    }
 }

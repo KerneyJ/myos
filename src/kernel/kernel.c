@@ -163,25 +163,25 @@ void kernel_main(uint32_t magic, uint32_t addr){
 		tag = (struct multiboot_tag *) ((multiboot_uint8_t *) tag + ((tag->size + 7) & ~7))){
 		switch (tag->type){
 			case MULTIBOOT_TAG_TYPE_CMDLINE:
-				mbt_cmdline(tag); // no triple fault 1st
+				mbt_cmdline(tag);
 				break;
 			case MULTIBOOT_TAG_TYPE_BOOT_LOADER_NAME:
-				mbt_blname(tag); // no triple fault 2nd
+				mbt_blname(tag);
 				break;
 			case MULTIBOOT_TAG_TYPE_MODULE:
 				mbt_module(tag);
 				break;
 			case MULTIBOOT_TAG_TYPE_BASIC_MEMINFO:
-				mbt_bmeminfo(tag); // no triple fault 4th
+				mbt_bmeminfo(tag);
 				break;
 			case MULTIBOOT_TAG_TYPE_BOOTDEV:
-				mbt_bootdev(tag); // no triple fault 5th
+				mbt_bootdev(tag);
 				break;
 			case MULTIBOOT_TAG_TYPE_MMAP:
-				mbt_mmap(tag); // no triple fault 3rd
+				mbt_mmap(tag);
 				break;
 			case MULTIBOOT_TAG_TYPE_FRAMEBUFFER:
-				fb = mbt_fb(tag); // 6th causes triple fault
+				fb = mbt_fb(tag);
 				break;
 		}
 	}
