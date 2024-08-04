@@ -65,14 +65,14 @@ mbheader:
 	/* BEGIN TAGS */
 
 	/* framebufer */
-		framebuffer_tag_start:
-			.word 5
-			.word 0
-			.long 20 # framebuffer_tag_end - framebuffer_tag_start
-			.long FRAMEBUFFER_WIDTH
-			.long FRAMEBUFFER_HEIGHT
-			.long 32
-		framebuffer_tag_end:
+	framebuffer_tag_start:
+		.word 5 /* type = framebuffer */
+		.word 1 /* optional flag */
+		.long framebuffer_tag_end - framebuffer_tag_start /* size */
+		.long 0 /* width */
+		.long 0 /* height */
+		.long 0 /* depth */
+	framebuffer_tag_end:
 
 
 	/* tags end */
