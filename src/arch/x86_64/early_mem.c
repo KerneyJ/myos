@@ -1,4 +1,5 @@
 #include "arch/x86_64/early_mem.h"
+#include "panic.h"
 
 /* from 0x200000 + 6 * PAGE_SIZE to 0x400000 + 6 * PAGE_SIZE 
  * Maps tracks first 512 GiB in of address space*/
@@ -26,12 +27,14 @@ uint64_t earlymem_init(){
     earlymem_pt = pt;
 
     // map page for the framebuffer
-    uint64_t fb_addr = 0xfd000000;
-    uint64_t paddr = alloc_page_earlymem();
-    map_page_earlymem(fb_addr, paddr, PG_WRITABLE);
+    uint64_t fb_addr = 0xfd000000, paddr;
+    for(int i = 0; i < 32; i++){
+        paddr = alloc_page_earlymem(fb_addr + (i * PAGE_SIZE));
+        if(paddr == 0)
+            panic();
+        map_page_earlymem(fb_addr + (i * PAGE_SIZE), paddr, PG_WRITABLE);
+    }
 
-    paddr = alloc_page_earlymem();
-    map_page_earlymem(fb_addr + PAGE_SIZE, paddr, PG_WRITABLE);
     return 0;
 }
 
@@ -52,12 +55,23 @@ uint64_t alloc_pagetable_earlymem(){
     return 0; // in future panic
 }
 
-uint64_t alloc_page_earlymem(){
+uint64_t alloc_page_earlymem(uint64_t addr){
     /* In future maybe have static variable or smth that caches
      * the location of free pages
      * or have some sort of data structure to make this faster
      */
     // find a free page
+    if(addr != 0){
+        uint64_t index, bit;
+        index = (addr / PAGE_SIZE) / 64;
+        bit = (addr / PAGE_SIZE) % 64;
+        if(page_bitmap[index] & (1 << bit))
+            return 0;
+        else{
+            page_bitmap[index] |= bit;
+            return addr;
+        }
+    }
     uint64_t page, width = 64, mask = 0xffffffffffffffff, index, pos = 0;
     for(index = 0; index < 32768; index++){
         if(mask != page_bitmap[index]){
