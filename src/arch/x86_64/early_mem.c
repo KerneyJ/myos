@@ -1,13 +1,14 @@
 #include "arch/x86_64/early_mem.h"
 #include "panic.h"
+#include "mm/paging.h"
 
 /* from 0x200000 + 6 * PAGE_SIZE to 0x400000 + 6 * PAGE_SIZE 
  * Maps tracks first 512 GiB in of address space*/
-uint64_t *page_bitmap = (uint64_t *)(MEM_BASE + 6 * PAGE_SIZE);
-uint64_t page_bitmap_size = 0;
-uint64_t *earlymem_pt = 0;
+static uint64_t *page_bitmap = (uint64_t *)(MEM_BASE + 6 * PAGE_SIZE);
+static uint64_t page_bitmap_size = 0;
+static uint64_t *earlymem_pt = 0;
 
-uint64_t earlymem_init(){
+uint64_t earlymem_init(struct earlymem_info* info){
     // Zero out the bitmap
     page_bitmap_size = BITMAP_ENTRIES * BITMAP_ENTRY_SIZE; 
     for(uint64_t i = 0; i < page_bitmap_size; i++)
@@ -35,6 +36,14 @@ uint64_t earlymem_init(){
         map_page_earlymem(fb_addr + (i * PAGE_SIZE), paddr, PG_WRITABLE);
     }
 
+    // populate early_meminfo struct
+    info->page_bitmap = page_bitmap;
+    info->bitmap_size = page_bitmap_size;
+    info->log_page_size = LOG_PAGE_SIZE;
+    info->log_table_size = LOG_TABLE_SIZE;
+    info->pml4 = (void*)pml4;
+    info->kernel_start = kernel_start;
+    info->kernel_end = kernel_end;
     return 0;
 }
 
@@ -68,7 +77,7 @@ uint64_t alloc_page_earlymem(uint64_t addr){
         if(page_bitmap[index] & (1 << bit))
             return 0;
         else{
-            page_bitmap[index] |= bit;
+            page_bitmap[index] |= (1 << bit);
             return addr;
         }
     }
