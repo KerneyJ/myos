@@ -1,8 +1,8 @@
 #include "multiboot2.h"
 #include "stdio.h"
 #include "tty.h"
-#include "vm.h"
 #include "arch.h"
+#include "mm/mm.h"
 
 void mbt_cmdline(struct multiboot_tag* tag) __attribute__((noinline));
 void mbt_blname(struct multiboot_tag* tag) __attribute__((noinline));
@@ -137,17 +137,19 @@ void kernel_main(uint32_t magic, uint32_t addr){
      * [*] info
      */
     struct multiboot_tag *tag;
+    struct earlymem_info info;
     unsigned size;
     void *fb;
 
     if(magic != MULTIBOOT2_BOOTLOADER_MAGIC)
         goto failure;
-//	term_init(); printf("[+]Terminal Initialized\n");
 
     if (addr & 7) // unaligned multiboot info struct
         goto failure;
 
-    configure_arch();
+    configure_arch(&info);
+    if(mem_init(info) < 0)
+        panic();
 
     size = *(unsigned *) addr;
     for (tag = (struct multiboot_tag *) (addr + 8); tag->type != MULTIBOOT_TAG_TYPE_END;
