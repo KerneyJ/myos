@@ -8,5 +8,5 @@ make ARCH=architecture run
 # Notes:
 * allocate a stack for each cpu and then point each CPUs stack pointer to those different  
 * flush TLB after every page table after context switch
-# Questions
-* For linker script why does PROVIDE give me incorrect numbers( thinking about PROVIDE(\_kernel\_end = .); )
+# TODO
+* make alloc_physpage give the option to allocate multiple pages
