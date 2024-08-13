@@ -14,30 +14,30 @@ loaded at by the bootloader. */
        early in the image or the bootloader won't recognize the file format.
        Next we'll put the .text section. */
     PROVIDE(kernel_start = .);
-    .multiboot BLOCK(4K) : ALIGN(4K)
+    .multiboot :
     {
         *(multiboot)
     }
 
-    .text BLOCK(4K) : ALIGN(4K)
+    .text :
     {
         *(.text)
     }
 
     /* Read-only data. */
-    .rodata BLOCK(4K) : ALIGN(4K)
+    .rodata :
     {
         *(.rodata)
     }
 
     /* Read-write data (initialized) */
-    .data BLOCK(4K) : ALIGN(4K)
+    .data :
     {
         *(.data)
     }
 
     /* Read-write data (uninitialized) and stack */
-    .bss BLOCK(4K) : ALIGN(4K)
+    .bss :
     {
         *(COMMON)
         *(.bss)
