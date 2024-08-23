@@ -22,8 +22,8 @@ uint64_t alloc_physpage(uint64_t paddr){
         panic();
     if(paddr != 0){
         uint64_t index, bit;
-        index = (paddr / log_page_size) / 64;
-        bit = (paddr / log_page_size) % 64;
+        index = (paddr / (1 << log_page_size)) / 64;
+        bit = (paddr / (1 << log_page_size)) % 64;
         if(page_bitmap[index] & (1 << bit)){
             return 0;
         }
@@ -53,13 +53,13 @@ uint64_t alloc_physpage(uint64_t paddr){
         pos -= 1;
     }
     page_bitmap[index] |= mask;
-    return (index * 64 + pos) * log_page_size;
+    return (index * 64 + pos) * (1 << log_page_size);
 }
 
 void free_page(uint64_t paddr){
     uint64_t index, bit;
-    index = (paddr / log_page_size) / 64;
-    bit = (paddr / log_page_size) % 64;
+    index = (paddr / (1 << log_page_size)) / 64;
+    bit = (paddr / (1 << log_page_size)) % 64;
     page_bitmap[index] = page_bitmap[index] & ~(1 << bit);
 }
 
