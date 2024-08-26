@@ -6,6 +6,12 @@
 static struct block *block_list[NUM_BUCKETS] = {0} ; // for 4k 1k 256b 64b and 16b blocks
 static struct block *block_misc = 0; // for random sizes after combining blocks
 static uint64_t bytes_avail = 0;
+static uint64_t page_size = 0;
+
+static inline uint64_t hash(const uint64_t x){
+    return ((x * 2654435769) >> (32 - 12)) % (sizeof(struct block) / page_size);
+}
+
 
 int mem_init(struct earlymem_info info){
     if(kpaging_init(info) < 0)
@@ -14,22 +20,14 @@ int mem_init(struct earlymem_info info){
     struct block b, *node;
     uint64_t addr, pos = 0;
     uint8_t *base;
-    const size_t page_size = 1 << info.log_page_size;
     size_t block_size = page_size;
+    page_size = 1 << info.log_page_size;
 
-    // allocate memory for int memory data structures
+    // allocate memory for init memory data structures
     addr = alloc_physpage(0);
     if(addr == 0 || map_page(addr, addr, PG_WRITABLE) < 0)
         return -1;
     base = (uint8_t *)addr;
-    block_size = sizeof(struct block);
-    memcpy(base, &block_size, sizeof(size_t));
-/*
-    for(uint64_t i = 0; i < INIT_SPACE; i += page_size){
-        addr = alloc_physpage(0);
-        if(addr == 0 || map_page(base + i * page_size, addr, PG_WRITABLE) < 0)
-           return -1;
-    }
 
     // create headers
     for(int i = 0; i < NUM_BUCKETS; i++){
@@ -41,14 +39,6 @@ int mem_init(struct earlymem_info info){
         memcpy(base + (i * sizeof(struct block)), &b, sizeof(struct block));
         block_size /= 4;
     }
-
-    // preallocate blocks
-    // 16b
-    // 64b
-    // 256b
-    // 1k
-    // 4k
-*/
     return 0;
 }
 

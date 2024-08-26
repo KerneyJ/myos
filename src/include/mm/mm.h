@@ -5,8 +5,6 @@
 #include <stdint.h>
 
 #define NUM_BUCKETS 5
-#define INIT_NUM_BLOCKS 8
-#define INIT_SPACE (INIT_NUM_BLOCKS * (4096 + 1024 + 256 + 64 + 16) + NUM_BUCKETS * INIT_NUM_BLOCKS * sizeof(struct block))
 
 // kalloc flags
 #define KALLOC_ALIGNED 1 // ensure that address is page aligned
