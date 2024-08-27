@@ -37,22 +37,9 @@ uint64_t alloc_physpage(uint64_t paddr){
     for(index = 0; index < page_bitmap_size; index++)
         if(mask != page_bitmap[index])
             break;
-    page = page_bitmap[index];
-    while(width > 1){
-        if((mask & page) != mask){
-            width /= 2;
-            mask = mask & (mask >> width);
-        }
-        else{
-            mask = mask << width;
-            pos += width;
-        }
-    }
-    if((mask & page) == mask){
-        mask <<= 1;
-        pos -= 1;
-    }
-    page_bitmap[index] |= mask;
+    page = ~(page_bitmap[index]);
+    pos = __builtin_ffsll(page) - 1;
+    page_bitmap[index] |= (1 << pos);
     return (index * 64 + pos) * (1 << log_page_size);
 }
 
