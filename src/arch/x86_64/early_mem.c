@@ -32,7 +32,7 @@ uint64_t earlymem_init(struct earlymem_info* info){
     for(int i = 0; i < 32; i++){
         paddr = alloc_page_earlymem(fb_addr + (i * PAGE_SIZE));
         if(paddr == 0)
-            panic();
+            panic("alloc_page_earlymem failed");
         map_page_earlymem(fb_addr + (i * PAGE_SIZE), paddr, PG_WRITABLE);
     }
 

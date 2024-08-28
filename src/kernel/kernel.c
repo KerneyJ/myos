@@ -149,7 +149,7 @@ void kernel_main(uint32_t magic, uint32_t addr){
 
     configure_arch(&info);
     if(mem_init(info) < 0)
-        panic();
+        panic("mem_init failed");
 
     size = *(unsigned *) addr;
     for (tag = (struct multiboot_tag *) (addr + 8); tag->type != MULTIBOOT_TAG_TYPE_END;

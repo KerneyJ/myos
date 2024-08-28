@@ -19,7 +19,7 @@ int kpaging_init(struct earlymem_info info){
 uint64_t alloc_physpage(uint64_t paddr){
     // FIXME search algorithm might not return 0 on failure
     if(page_bitmap == 0 || page_bitmap_size == 0)
-        panic();
+        panic("bitmap not initialized");
     if(paddr != 0){
         uint64_t index, bit;
         index = (paddr / (1 << log_page_size)) / 64;
@@ -43,6 +43,13 @@ uint64_t alloc_physpage(uint64_t paddr){
     return (index * 64 + pos) * (1 << log_page_size);
 }
 
+inline uint64_t gd_allocpage(){
+    uint64_t addr = alloc_physpage(0);
+    if(addr == 0 || map_page(addr, addr, PG_WRITABLE) < 0)
+        panic("alloc_gdpage failed");
+    return addr;
+}
+
 void free_page(uint64_t paddr){
     uint64_t index, bit;
     index = (paddr / (1 << log_page_size)) / 64;
@@ -52,7 +59,7 @@ void free_page(uint64_t paddr){
 
 int map_page(uint64_t vaddr, uint64_t paddr, uint64_t flags){
     if(pml4 == 0) // FIXME probably just read cr3
-        panic();
+        panic("pml4 not set");
 
     // need to rework this make it more modular
     uint64_t pml4_index = (vaddr >> 39) & 0x1ff;
@@ -96,10 +103,10 @@ int map_page(uint64_t vaddr, uint64_t paddr, uint64_t flags){
 
 int unmap_page(uint64_t vaddr){
     if(pml4 == 0)
-        panic();
+        panic("unimplemented");
 }
 
 uint64_t create_pagetable(){
     if(pml4 == 0)
-        panic();
+        panic("unimplemented");
 }

@@ -1,1 +1,1 @@
-void panic() __attribute__((noinline));
+void panic(const char* str) __attribute__((noinline));
