@@ -23,10 +23,16 @@ static int prealloc_blocks(struct block* head, uint8_t* base, uint64_t block_siz
         addr = alloc_gdpage();
         idx = hash(addr, blocks_per_page);
         curr = ((struct block*)bucket_base) + idx;
+        /*
         while(curr->header.flags.present){
-            bucket_base = ((uint64_t*)bucket_base - 1)[0]; // gross
-            if(!bucket_base){
-                addr = alloc_physpage(0);
+            bucket_base = ((uint64_t*)bucket_base - 1)[0]; THIS STUFF SUCKS BRO, MAKE A STRUCT FOR THIS// gross
+            if(!(bucket_base[0])){
+                addr = alloc_gdpage();
+                memset(addr, 0, page_size);
+                ((uint64_t*)bucket_base)[0] = addr;
+                bucket_base = addr + sizeof(uint64_t);
+                curr = (struct block*)bucket_base) + idx;
+                break;
             }
             if(curr->header.next){
                 curr = curr->header.next;
@@ -34,6 +40,7 @@ static int prealloc_blocks(struct block* head, uint8_t* base, uint64_t block_siz
             }
 
         }
+        */
         if(curr->header.flags.present){
             // if this bucket is present then use the bucket on the adjacent page
             bucket_base = ((uint64_t*)base)[0];
@@ -75,10 +82,9 @@ int mem_init(struct earlymem_info info){
     addr = alloc_gdpage();
     memset(addr, 0, page_size);
     page_base = (uint8_t *)addr;
+
     addr = alloc_gdpage();
     memset(addr, 0, page_size);
-
-    page_base = (uint8_t *)addr;
     memcpy(page_base, &addr, sizeof(uint64_t));
     ((uint64_t*)addr)[0] = 0;
     pos += sizeof(uint64_t);
