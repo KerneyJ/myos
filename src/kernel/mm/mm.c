@@ -20,9 +20,7 @@ static int prealloc_blocks(struct block* head, uint8_t* base, uint64_t block_siz
 
     for(int i = 0; i < num_blocks; i++) {
         // allocate a physical page
-        addr = alloc_physpage(0);
-        if(addr == 0 || map_page(addr, addr, PG_WRITABLE) < 0)
-            return -1;
+        addr = alloc_gdpage();
         idx = hash(addr, blocks_per_page);
         curr = ((struct block*)bucket_base) + idx;
         while(curr->header.flags.present){
@@ -74,14 +72,10 @@ int mem_init(struct earlymem_info info){
     bpp = (page_size - sizeof(uint64_t*)) / sizeof(struct block);
 
     // allocate memory for init memory data structures
-    addr = alloc_physpage(0);
-    if(addr == 0 || map_page(addr, addr, PG_WRITABLE) < 0)
-        return -1;
+    addr = alloc_gdpage();
     memset(addr, 0, page_size);
     page_base = (uint8_t *)addr;
-    addr = alloc_physpage(0);
-    if(addr == 0 || map_page(addr, addr, PG_WRITABLE) < 0)
-        return -1;
+    addr = alloc_gdpage();
     memset(addr, 0, page_size);
 
     page_base = (uint8_t *)addr;
