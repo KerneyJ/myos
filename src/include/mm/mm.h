@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define NUM_BUCKETS 5
+#define NUM_BUCKETS 4
 
 // kalloc flags
 #define KALLOC_ALIGNED 1 // ensure that address is page aligned
@@ -24,7 +24,8 @@ struct block_header {
         struct {
             unsigned free : 1;
             unsigned aligned : 1;
-            unsigned unused : 6;
+            unsigned present : 1;
+            unsigned unused : 5;
         } flags;
         uint8_t iflags;
     };
