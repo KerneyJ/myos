@@ -43,7 +43,7 @@ uint64_t alloc_physpage(uint64_t paddr){
     return (index * 64 + pos) * (1 << log_page_size);
 }
 
-inline uint64_t gd_allocpage(){
+uint64_t alloc_gdpage(){
     uint64_t addr = alloc_physpage(0);
     if(addr == 0 || map_page(addr, addr, PG_WRITABLE) < 0)
         panic("alloc_gdpage failed");
