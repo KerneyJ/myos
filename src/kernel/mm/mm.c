@@ -13,43 +13,45 @@ static inline uint64_t hash(const uint64_t x, const uint64_t buckets){
     return ((x * 2654435769) >> (32 - 12)) % buckets;
 }
 
+static int create_block() {
+}
+
+static struct block *findcreate_slot(uint64_t addr, uint8_t* bucket_base, uint64_t blocks_per_page) {
+    struct block* curr;
+    uint64_t idx;
+
+    idx = hash(addr, blocks_per_page);
+    curr = ((struct block*)bucket_base) + idx;
+    while(curr->header.flags.present){
+        // if there is another bucket, go to it
+        if( *((uint64_t*)bucket_base - 1) ){
+            bucket_base = *((uint64_t*)bucket_base - 1);
+            bucket_base += sizeof(uint64_t);
+            curr = ((struct block*)bucket_base) + idx;
+            continue;
+        }
+
+        // since there isn't another bucket, create it
+        uint8_t *new_page =  alloc_gdpage();
+        memset(new_page, 0, page_size); // zero out the page
+        memcpy((uint64_t*)bucket_base - 1, &new_page, sizeof(uint64_t)); // move the address of the next page to the current;
+        new_page += sizeof(uint64_t);
+        curr = ((struct block*)new_page) + idx;
+    }
+
+    return curr;
+}
+
 static int prealloc_blocks(struct block* head, uint8_t* base, uint64_t block_size, uint64_t num_blocks, uint64_t blocks_per_page){
     struct block* node = head, *curr;
     uint8_t* bucket_base = base + sizeof(uint64_t);
     uint64_t idx, addr;
 
-    for(int i = 0; i < num_blocks; i++) {
-        // allocate a physical page
+    for(int i = 0; i < num_blocks; i += page_size / block_size) {
+        // allocate a physical page for the new blocks
         addr = alloc_gdpage();
-        idx = hash(addr, blocks_per_page);
-        curr = ((struct block*)bucket_base) + idx;
-        /*
-        while(curr->header.flags.present){
-            bucket_base = ((uint64_t*)bucket_base - 1)[0]; THIS STUFF SUCKS BRO, MAKE A STRUCT FOR THIS// gross
-            if(!(bucket_base[0])){
-                addr = alloc_gdpage();
-                memset(addr, 0, page_size);
-                ((uint64_t*)bucket_base)[0] = addr;
-                bucket_base = addr + sizeof(uint64_t);
-                curr = (struct block*)bucket_base) + idx;
-                break;
-            }
-            if(curr->header.next){
-                curr = curr->header.next;
-                continue;
-            }
 
-        }
-        */
-        if(curr->header.flags.present){
-            // if this bucket is present then use the bucket on the adjacent page
-            bucket_base = ((uint64_t*)base)[0];
-            bucket_base += sizeof(uint64_t);
-            curr = ((struct block*)bucket_base) + idx;
-            if(curr->header.flags.present)
-                return -1; // TODO future I should allocate another page?
-        }
-
+        curr = findcreate_slot(addr, bucket_base, blocks_per_page);
         // fill out block
         curr->header.iflags = 0;
         curr->header.flags.present = 1;
@@ -83,10 +85,12 @@ int mem_init(struct earlymem_info info){
     memset(addr, 0, page_size);
     page_base = (uint8_t *)addr;
 
+    /*
     addr = alloc_gdpage();
     memset(addr, 0, page_size);
     memcpy(page_base, &addr, sizeof(uint64_t));
     ((uint64_t*)addr)[0] = 0;
+    */
     pos += sizeof(uint64_t);
 
     // create headers
@@ -105,40 +109,8 @@ int mem_init(struct earlymem_info info){
 
     // create initial blocks
     // 4k
-    prealloc_blocks(block_list[0], page_base, page_size, bpp / NUM_BUCKETS, bpp);
-/*
-    bucket_base = page_base + sizeof(uint64_t);
-    node = block_list[0];
-    for(int j = 0; j < bpb; j++){
-        // allocate a physical page
-        addr = alloc_physpage(0);
-        if(addr == 0 || map_page(addr, addr, PG_WRITABLE) < 0)
-            return -1;
-        idx = hash(addr, bpp);
-        curr = ((struct block*)bucket_base) + idx;
-        if(curr->header.flags.present){
-            // if this bucket is present then use the bucket on the adjacent page
-            bucket_base = ((uint64_t*)page_base)[0];
-            bucket_base += sizeof(uint64_t);
-            curr = ((struct block*)bucket_base) + idx;
-            if(curr->header.flags.present)
-                return -2; // TODO future I should allocate another page?
-        }
+    prealloc_blocks(block_list[0], page_base, page_size, 100, bpp); // bpp / NUM_BUCKETS, bpp);
 
-        // fill out block
-        curr->header.iflags = 0;
-        curr->header.flags.present = 1;
-        curr->header.flags.aligned = 1;
-        curr->header.size = block_size;
-        curr->header.prev = node;
-        curr->header.next = 0;
-        curr->addr = addr;
-        node->header.next = curr;
-        node = curr;
-        bucket_base = page_base + sizeof(uint64_t);
-    }
-    block_size /= 4;
-*/
     return 0;
 }
 
