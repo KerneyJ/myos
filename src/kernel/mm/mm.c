@@ -49,13 +49,13 @@ static int prealloc_blocks(struct block* head, uint8_t* base, uint64_t block_siz
     for(int i = 0; i < num_blocks; i += page_size / block_size){
         // allocate a physical page for the new blocks
         addr = alloc_gdpage();
-
         for(int j = 0; j < page_size / block_size; j++){
             curr = findcreate_slot(addr + j * block_size, bucket_base, blocks_per_page);
             // fill out block
             curr->header.iflags = 0;
             curr->header.flags.present = 1;
-            curr->header.flags.aligned = 1;
+            if(block_size == page_size && addr % page_size == 0)
+                curr->header.flags.aligned = 1;
             curr->header.size = block_size;
             curr->header.prev = node;
             curr->header.next = 0;
@@ -85,13 +85,6 @@ int mem_init(struct earlymem_info info){
     addr = alloc_gdpage();
     memset(addr, 0, page_size);
     page_base = (uint8_t *)addr;
-
-    /*
-    addr = alloc_gdpage();
-    memset(addr, 0, page_size);
-    memcpy(page_base, &addr, sizeof(uint64_t));
-    ((uint64_t*)addr)[0] = 0;
-    */
     pos += sizeof(uint64_t);
 
     // create headers
@@ -109,9 +102,11 @@ int mem_init(struct earlymem_info info){
     }
 
     // create initial blocks
-    // 4k
-    prealloc_blocks(block_list[0], page_base, page_size, bpp / NUM_BUCKETS, bpp);
-
+    block_size = page_size;
+    for(int i = 0; i < NUM_BUCKETS; i++){
+        prealloc_blocks(block_list[0], page_base, block_size, bpp / NUM_BUCKETS, bpp);
+        block_size /= 4;
+    }
     return 0;
 }
 
