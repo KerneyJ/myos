@@ -23,8 +23,8 @@ struct block_header {
     union {
         struct {
             unsigned free : 1;
-            unsigned aligned : 1;
             unsigned present : 1;
+            unsigned aligned : 1;
             unsigned unused : 5;
         } flags;
         uint8_t iflags;
