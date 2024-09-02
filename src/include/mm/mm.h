@@ -40,7 +40,7 @@ struct block{
 };
 
 int mem_init(struct earlymem_info info);
-void* kalloc(uint64_t size, int flags);
+void* kalloc(uint64_t size);
 void* krealloc(void* ptr, uint64_t size, int flags);
 void kfree(void *ptr);
 

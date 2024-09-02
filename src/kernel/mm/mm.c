@@ -56,8 +56,6 @@ static int prealloc_blocks(struct block* head, uint8_t* base, uint64_t block_siz
             // fill out block
             curr->header.iflags = 0;
             curr->header.flags.present = 1;
-            if(block_size == page_size && addr % page_size == 0)
-                curr->header.flags.aligned = 1;
             curr->header.size = block_size;
             curr->header.prev = node;
             curr->header.next = 0;
@@ -112,10 +110,10 @@ int mem_init(struct earlymem_info info){
     return 0;
 }
 
-void* kalloc(uint64_t size, int flags){
+void* kalloc(uint64_t size){
     struct block* node, *prev, *next;
     void* ret = 0;
-    flags &= 0x3; // for free and present
+    int flags = 0x3; // for free and present
     if(block_list[0] == 0 && bytes_avail == 0)
         panic("mem_init not called");
 
@@ -170,7 +168,7 @@ void kfree(void *ptr){
     while( curr->addr != ptr ){
         bbase = *((uint64_t*)bbase - 1);
         if(!bbase)
-            return; // TODO Should I panic here?
+            panic("couldn't find header");// TODO Should I panic here?
         bbase += sizeof(uint64_t);
         curr = ((struct block*)bbase) + idx;
     }
@@ -189,7 +187,7 @@ void kfree(void *ptr){
         head = block_list[3];
     }
     else{
-        return; // TODO Should I panic here?
+        panic("couldn't find head"); // TODO Should I panic here?
     }
 
     // append freed block
