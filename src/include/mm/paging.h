@@ -10,6 +10,7 @@
 
 int kpaging_init(struct earlymem_info info);
 uint64_t alloc_physpage(uint64_t paddr);
+uint64_t alloc_big_physpage(uint64_t paddr);
 uint64_t alloc_gdpage();
 void free_page(uint64_t paddr);
 int map_page(uint64_t vaddr, uint64_t paddr, uint64_t flags);

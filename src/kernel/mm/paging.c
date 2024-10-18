@@ -43,6 +43,14 @@ uint64_t alloc_physpage(uint64_t paddr){
     return (index * 64 + pos) * (1 << log_page_size);
 }
 
+uint64_t alloc_big_physpage(uint64_t paddr){
+    if(page_bitmap == 0 || page_bitmap_size == 0)
+        panic("bitmap not initialized");
+
+    if(paddr % 0x200000 != 0) // addr needs to be aligned
+        return 0;
+}
+
 uint64_t alloc_gdpage(){
     uint64_t addr = alloc_physpage(0);
     if(addr == 0 || map_page(addr, addr, PG_WRITABLE) < 0)
@@ -50,7 +58,7 @@ uint64_t alloc_gdpage(){
     return addr;
 }
 
-void free_page(uint64_t paddr){
+void free_page(uint64_t paddr){ // fix me for big pages
     uint64_t index, bit;
     index = (paddr / (1 << log_page_size)) / 64;
     bit = (paddr / (1 << log_page_size)) % 64;
