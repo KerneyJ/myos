@@ -5,6 +5,9 @@ architecture options
   - i386
 # Run
 make ARCH=architecture run
+# Degbug
+target remote :1234
+After make ARCH=architecture run-debug
 # Notes:
 * allocate a stack for each cpu and then point each CPUs stack pointer to those different  
 * flush TLB after every page table after context switch
