@@ -11,7 +11,6 @@ void kernel_main(uint32_t magic, uint32_t addr){
      * [-] error
      * [*] info
      */
-    struct multiboot_tag *tag;
     struct earlymem_info info;
     void *fb;
 

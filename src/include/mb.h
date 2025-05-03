@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include "multiboot2.h"
 
 void* mb_init(uint32_t addr);

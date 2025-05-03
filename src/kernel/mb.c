@@ -1,8 +1,10 @@
 #include "mb.h"
 
 void* mb_init(uint32_t addr){
+
+    struct multiboot_tag *tag;
     void* ret;
-    unsigned size = *(unsiged *)addr;
+    unsigned size = *(unsigned *)addr;
     for (tag = (struct multiboot_tag *) (addr + 8); tag->type != MULTIBOOT_TAG_TYPE_END;
         tag = (struct multiboot_tag *) ((multiboot_uint8_t *) tag + ((tag->size + 7) & ~7))){
         switch (tag->type){
