@@ -3,7 +3,7 @@
 #include "tty.h"
 #include "arch.h"
 #include "mm/mm.h"
-
+#include "video.h"
 
 void kernel_main(uint32_t magic, uint32_t addr){
     /*
@@ -11,8 +11,8 @@ void kernel_main(uint32_t magic, uint32_t addr){
      * [-] error
      * [*] info
      */
-    struct earlymem_info info;
-    void *fb;
+    struct earlymem_info einfo;
+    struct video_info vinfo;
 
     if(magic != MULTIBOOT2_BOOTLOADER_MAGIC)
         goto failure;
@@ -20,10 +20,10 @@ void kernel_main(uint32_t magic, uint32_t addr){
     if (addr & 7) // unaligned multiboot info struct
         goto failure;
 
-    configure_arch(&info);
-    if(mem_init(info) < 0)
+    configure_arch(&einfo);
+    if(mem_init(einfo) < 0)
         panic("mem_init failed");
-    fb = mb_init(addr);
+    mb_init(addr, &vinfo);
 
     return; // jump out of kernl_main to scheduler
 

@@ -1,9 +1,7 @@
 #include "mb.h"
 
-void* mb_init(uint32_t addr){
-
+int mb_init(uint32_t addr, struct video_info *vinfo){
     struct multiboot_tag *tag;
-    void* ret;
     unsigned size = *(unsigned *)addr;
     for (tag = (struct multiboot_tag *) (addr + 8); tag->type != MULTIBOOT_TAG_TYPE_END;
         tag = (struct multiboot_tag *) ((multiboot_uint8_t *) tag + ((tag->size + 7) & ~7))){
@@ -27,7 +25,7 @@ void* mb_init(uint32_t addr){
                 mbt_mmap(tag);
                 break;
             case MULTIBOOT_TAG_TYPE_FRAMEBUFFER:
-                ret = mbt_fb(tag);
+                mbt_fb(tag);
                 break;
         }
     }
@@ -79,12 +77,13 @@ void mbt_mmap(struct multiboot_tag* tag){
 	}
 }
 
-void* mbt_fb(struct multiboot_tag* tag){
-	multiboot_uint32_t color;
+void mbt_fb(struct multiboot_tag* tag, struct video_info* vinfo){
+    uint32_t color;
 	unsigned i;
 	struct multiboot_tag_framebuffer *tagfb = (struct multiboot_tag_framebuffer *) tag;
 	void *fb = (void *)tagfb->common.framebuffer_addr;
 
+    // set up the color
 	switch (tagfb->common.framebuffer_type){
 		case MULTIBOOT_FRAMEBUFFER_TYPE_INDEXED:
 			{
@@ -119,6 +118,7 @@ void* mbt_fb(struct multiboot_tag* tag){
 			break;
 	}
 
+    // Draw a line
 	for (i = 0; i < tagfb->common.framebuffer_width && i < tagfb->common.framebuffer_height; i++){
 		switch (tagfb->common.framebuffer_bpp){
 			case 8:
@@ -148,6 +148,9 @@ void* mbt_fb(struct multiboot_tag* tag){
 				break;
 		}
 	}
-	return fb;
+    vinfo->color = color;
+    vinfo->framebuffer_addr = fb;
+    vinfo->bpp = tagfb->common.framebuffer_bpp;
+    return 0;
 }
 
