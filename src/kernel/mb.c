@@ -25,11 +25,11 @@ int mb_init(uint32_t addr, struct video_info *vinfo){
                 mbt_mmap(tag);
                 break;
             case MULTIBOOT_TAG_TYPE_FRAMEBUFFER:
-                mbt_fb(tag);
+                mbt_fb(tag, vinfo);
                 break;
         }
     }
-    return ret;
+    return 0;
 }
 
 void mbt_cmdline(struct multiboot_tag* tag){
@@ -117,40 +117,12 @@ void mbt_fb(struct multiboot_tag* tag, struct video_info* vinfo){
 			color = 0xffffffff;
 			break;
 	}
-
-    // Draw a line
-	for (i = 0; i < tagfb->common.framebuffer_width && i < tagfb->common.framebuffer_height; i++){
-		switch (tagfb->common.framebuffer_bpp){
-			case 8:
-				{
-					multiboot_uint8_t *pixel = fb + tagfb->common.framebuffer_pitch * i + i;
-					*pixel = color;
-				}
-				break;
-			case 15:
-			case 16:
-				{
-					multiboot_uint16_t *pixel = fb + tagfb->common.framebuffer_pitch * i + 2 * i;
-					*pixel = color;
-				}
-				break;
-			case 24:
-				{
-					multiboot_uint32_t *pixel = fb + tagfb->common.framebuffer_pitch * i + 3 * i;
-					*pixel = (color & 0xffffff) | (*pixel & 0xff000000);
-				}
-				break;
-			case 32:
-				{
-					multiboot_uint32_t *pixel = fb + tagfb->common.framebuffer_pitch * i + 4 * i;
-					*pixel = color;
-				}
-				break;
-		}
-	}
     vinfo->color = color;
     vinfo->framebuffer_addr = fb;
     vinfo->bpp = tagfb->common.framebuffer_bpp;
+    vinfo->width = tagfb->common.framebuffer_width;
+    vinfo->height = tagfb->common.framebuffer_height;
+    vinfo->pitch = tagfb->common.framebuffer_pitch;
     return 0;
 }
 
