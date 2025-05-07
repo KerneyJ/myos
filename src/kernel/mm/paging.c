@@ -51,7 +51,7 @@ uint64_t alloc_big_physpage(uint64_t paddr){
         return 0;
 }
 
-// directly mapped writable page
+// allocate a directly mapped writable page
 uint64_t alloc_gdpage(){
     uint64_t addr = alloc_physpage(0);
     if(addr == 0 || map_page(addr, addr, PG_WRITABLE) < 0)
@@ -111,11 +111,9 @@ int map_page(uint64_t vaddr, uint64_t paddr, uint64_t flags){
 }
 
 int unmap_page(uint64_t vaddr){
-    if(pml4 == 0)
-        panic("unimplemented");
+    panic("unimplemented");
 }
 
-uint64_t create_pagetable(){
-    if(pml4 == 0)
-        panic("unimplemented");
+uint64_t alloc_pagetable(){
+    panic("unimplemented");
 }

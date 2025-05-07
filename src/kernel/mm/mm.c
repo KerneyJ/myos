@@ -16,7 +16,7 @@ static inline uint64_t hash(const uint64_t x){
 }
 
 static int create_block() {
-    panic("not implemented");
+    panic("unimplemented");
 }
 
 static struct block *findcreate_slot(uint64_t addr, uint8_t* bbase) {
