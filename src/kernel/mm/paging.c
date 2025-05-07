@@ -51,6 +51,7 @@ uint64_t alloc_big_physpage(uint64_t paddr){
         return 0;
 }
 
+// directly mapped writable page
 uint64_t alloc_gdpage(){
     uint64_t addr = alloc_physpage(0);
     if(addr == 0 || map_page(addr, addr, PG_WRITABLE) < 0)
@@ -58,7 +59,7 @@ uint64_t alloc_gdpage(){
     return addr;
 }
 
-void free_page(uint64_t paddr){ // fix me for big pages
+void free_page(uint64_t paddr){ // FIXME for big pages
     uint64_t index, bit;
     index = (paddr / (1 << log_page_size)) / 64;
     bit = (paddr / (1 << log_page_size)) % 64;

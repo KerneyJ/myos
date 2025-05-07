@@ -16,6 +16,7 @@ static inline uint64_t hash(const uint64_t x){
 }
 
 static int create_block() {
+    panic("not implemented");
 }
 
 static struct block *findcreate_slot(uint64_t addr, uint8_t* bbase) {
@@ -103,7 +104,7 @@ int mem_init(struct earlymem_info info){
     // create initial blocks
     block_size = page_size;
     for(int i = 0; i < NUM_BUCKETS; i++){
-        prealloc_blocks(block_list[0], bucket_base, block_size, buckets / NUM_BUCKETS);
+        prealloc_blocks(block_list[i], bucket_base, block_size, buckets / NUM_BUCKETS);
         block_size /= 4;
         bytes_avail += block_size * (bpp / NUM_BUCKETS);
     }

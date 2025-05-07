@@ -2,7 +2,8 @@
 #include "panic.h"
 #include "mm/paging.h"
 
-/* from 0x200000 + 6 * PAGE_SIZE to 0x400000 + 6 * PAGE_SIZE 
+/* from 0x200000 is allocated by the boot code
+ * from 0x200000 + 6 * PAGE_SIZE to 0x400000 + 6 * PAGE_SIZE
  * Maps tracks first 512 GiB in of address space*/
 static uint64_t *page_bitmap = (uint64_t *)(MEM_BASE + 6 * PAGE_SIZE);
 static uint64_t page_bitmap_size = 0;
@@ -27,6 +28,7 @@ uint64_t earlymem_init(struct earlymem_info* info){
     pd[3] = (uint64_t)pt + PG_PRESENT + PG_WRITABLE;
     earlymem_pt = pt;
 
+    // FIXME(kerneyj): this should allocate a lot of pages for the framebuffer yet I'm still page faulting
     // map page for the framebuffer
     uint64_t fb_addr = 0xfd000000, paddr;
     for(int i = 0; i < 32; i++){
@@ -80,6 +82,9 @@ uint64_t alloc_page_earlymem(uint64_t addr){
             page_bitmap[index] |= (1 << bit);
             return addr;
         }
+    }
+    else{
+        return 0;
     }
     uint64_t page, width = 64, mask = 0xffffffffffffffff, index, pos = 0;
     for(index = 0; index < 32768; index++){

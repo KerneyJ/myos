@@ -43,7 +43,7 @@ pml3: // 512 GiB
 	.endr
 
 .global pml2
-pml2: // 1 GiB
+pml2: // 1 GiB (Each entry is 2 MiB)
 	.set pg, 0
 	.rept 3
 		.quad (pg + PG_PRESENT + PG_BIG + PG_WRITABLE)
