@@ -13,6 +13,7 @@ After make ARCH=architecture run-debug
 * flush TLB after every page table after context switch
 # TODO
 - [ ] Need to finish MM
+    - [ ] Audit mem_init, doesn't look right in retrospect
     - [ ] implement alloc_pagetable
     - [ ] implement unmap_page
     - [ ] implement create_block
