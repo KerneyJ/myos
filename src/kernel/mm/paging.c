@@ -6,13 +6,19 @@ static uint8_t log_table_size;
 static uint64_t* page_bitmap = 0;
 static uint64_t page_bitmap_size = 0;
 static uint64_t* pml4 = 0;
+static struct pt_node base = {0};
 
 int kpaging_init(struct earlymem_info info){
+    // populate the static variables above
     page_bitmap = info.page_bitmap;
     page_bitmap_size = info.bitmap_size;
     pml4 = info.pml4;
     log_page_size = info.log_page_size;
     log_table_size = info.log_table_size;
+
+    // pre allocate a pool of page tables
+    // struct pt_node* pool = alloc
+    
     return 0;
 }
 
@@ -33,7 +39,7 @@ uint64_t alloc_physpage(uint64_t paddr){
         }
     }
 
-    uint64_t page, width = 64, mask = 0xffffffffffffffff, index, pos = 0;
+    uint64_t page, mask = 0xffffffffffffffff, index, pos = 0;
     for(index = 0; index < page_bitmap_size; index++)
         if(mask != page_bitmap[index])
             break;

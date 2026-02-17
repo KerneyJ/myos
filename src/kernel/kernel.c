@@ -2,6 +2,7 @@
 #include "stdio.h"
 #include "tty.h"
 #include "arch.h"
+#include "panic.h"
 #include "mm/mm.h"
 #include "video.h"
 

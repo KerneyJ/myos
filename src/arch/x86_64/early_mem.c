@@ -2,6 +2,12 @@
 #include "panic.h"
 #include "mm/paging.h"
 
+extern uint64_t *pml4;
+extern uint64_t *pml3;
+extern uint64_t *pml2;
+extern uint8_t* kernel_start;
+extern uint8_t* kernel_end;
+
 /* from 0x200000 is allocated by the boot code
  * from 0x200000 + 6 * PAGE_SIZE to 0x400000 + 6 * PAGE_SIZE
  * Maps tracks first 512 GiB in of address space*/
@@ -54,13 +60,13 @@ uint64_t alloc_pagetable_earlymem(){
         return 0; // in future panic
 
     uint64_t* pt_addr;
-    for(int i = 0; i < TABLE_SIZE; i++){
+    for(uint64_t i = 0; i < TABLE_SIZE; i++){
         if(!(earlymem_pt[i] & PG_PRESENT)){
             pt_addr = (uint64_t*)((i * PAGE_SIZE) + EARLY_PT_BASE);
             earlymem_pt[i] = (uint64_t)pt_addr + PG_PRESENT + PG_WRITABLE;
             for(int j = 0; j < TABLE_SIZE; j++)
                 pt_addr[j] = 0;
-            return pt_addr;
+            return (uint64_t)pt_addr;
         }
     }
     return 0; // in future panic
@@ -82,9 +88,6 @@ uint64_t alloc_page_earlymem(uint64_t addr){
             page_bitmap[index] |= (1 << bit);
             return addr;
         }
-    }
-    else{
-        return 0;
     }
     uint64_t page, width = 64, mask = 0xffffffffffffffff, index, pos = 0;
     for(index = 0; index < 32768; index++){
@@ -114,6 +117,13 @@ uint64_t alloc_page_earlymem(uint64_t addr){
     return (index * 64 + pos) * PAGE_SIZE; // the base physical address of the page
 }
 
+uint64_t alloc_gdpage_earlymem(){
+    uint64_t addr = alloc_page_earlymem(0);
+    if(addr == 0 || map_page_earlymem(addr, addr, PG_WRITABLE) < 0)
+        panic("alloc_gdpage_earlymem failed");
+    return addr;
+}
+
 uint64_t free_page_earlymem(uint64_t paddr){
 	uint64_t index, bit;
 	index = (paddr / PAGE_SIZE) / 64;
@@ -122,7 +132,7 @@ uint64_t free_page_earlymem(uint64_t paddr){
 	return 0;
 }
 
-uint64_t map_page_earlymem(uint64_t vaddr, uint64_t paddr, uint64_t flags){
+int map_page_earlymem(uint64_t vaddr, uint64_t paddr, uint64_t flags){
     // need to rework this make it more modular
     uint64_t pml4_index = (vaddr >> 39) & 0x1ff;
     uint64_t pml3_index = (vaddr >> 30) & 0x1ff;
@@ -136,8 +146,8 @@ uint64_t map_page_earlymem(uint64_t vaddr, uint64_t paddr, uint64_t flags){
 
     pml = (uint64_t*)(pml[pml4_index] & (~0xfff));
     if(!(pml[pml3_index] & PG_PRESENT)){
-        uint64_t* pml2 = alloc_pagetable_earlymem();
-        uint64_t* pml1 = alloc_pagetable_earlymem();
+        uint64_t* pml2 = (uint64_t*)alloc_pagetable_earlymem();
+        uint64_t* pml1 = (uint64_t*)alloc_pagetable_earlymem();
         pml[pml3_index] = (uint64_t)pml2 + PG_WRITABLE + PG_PRESENT;
         pml2[pml2_index] = (uint64_t)pml1 + PG_WRITABLE + PG_PRESENT;
         pml1[pml1_index] = paddr + PG_PRESENT + (flags & 0xfff);
@@ -146,7 +156,7 @@ uint64_t map_page_earlymem(uint64_t vaddr, uint64_t paddr, uint64_t flags){
 
     pml = (uint64_t*)(pml[pml3_index] & (~0xfff)); // FIXME check if for PG_BIG Flag
     if(!(pml[pml2_index] & PG_PRESENT)){
-        uint64_t* pml1 = alloc_pagetable_earlymem();
+        uint64_t* pml1 = (uint64_t*)alloc_pagetable_earlymem();
         pml[pml2_index] = (uint64_t)pml1 + PG_WRITABLE + PG_PRESENT;
         pml1[pml1_index] = paddr + PG_PRESENT + (flags & 0xfff);
         return 0;

@@ -2,7 +2,6 @@
 
 int mb_init(uint32_t addr, struct video_info *vinfo){
     struct multiboot_tag *tag;
-    unsigned size = *(unsigned *)addr;
     for (tag = (struct multiboot_tag *) (addr + 8); tag->type != MULTIBOOT_TAG_TYPE_END;
         tag = (struct multiboot_tag *) ((multiboot_uint8_t *) tag + ((tag->size + 7) & ~7))){
         switch (tag->type){
@@ -123,6 +122,5 @@ void mbt_fb(struct multiboot_tag* tag, struct video_info* vinfo){
     vinfo->width = tagfb->common.framebuffer_width;
     vinfo->height = tagfb->common.framebuffer_height;
     vinfo->pitch = tagfb->common.framebuffer_pitch;
-    return 0;
 }
 

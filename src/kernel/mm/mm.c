@@ -27,16 +27,16 @@ static struct block *findcreate_slot(uint64_t addr, uint8_t* bbase) {
     while(curr->header.flags.present){
         // if there is another bucket, go to it
         if( *((uint64_t*)bbase - 1) ){
-            bbase = *((uint64_t*)bbase - 1);
+            bbase = (uint8_t*) *((uint64_t*)bbase - 1);
             bbase += sizeof(uint64_t);
             curr = ((struct block*)bbase) + idx;
             continue;
         }
 
         // since there isn't another bucket, create it
-        uint8_t *new_page =  alloc_gdpage();
+        uint8_t *new_page =  (uint8_t*)alloc_gdpage();
         memset(new_page, 0, page_size); // zero out the page
-        memcpy((uint64_t*)bbase - 1, &new_page, sizeof(uint64_t)); // move the address of the next page to the current;
+        memcpy((uint64_t*)bbase - 1, &new_page, sizeof(uint64_t));         // move the address of the next page to the current;
         new_page += sizeof(uint64_t);
         curr = ((struct block*)new_page) + idx;
     }
@@ -47,12 +47,12 @@ static struct block *findcreate_slot(uint64_t addr, uint8_t* bbase) {
 static int prealloc_blocks(struct block* head, uint8_t* base, uint64_t block_size, uint64_t num_blocks){
     struct block* node = head, *curr;
     uint8_t* bbase = base + sizeof(uint64_t);
-    uint64_t idx, addr;
+    uint64_t addr;
 
-    for(int i = 0; i < num_blocks; i += page_size / block_size){
+    for(uint64_t i = 0; i < num_blocks; i += page_size / block_size){
         // allocate a physical page for the new blocks
         addr = alloc_gdpage();
-        for(int j = 0; j < page_size / block_size; j++){
+        for(uint64_t j = 0; j < page_size / block_size; j++){
             curr = findcreate_slot(addr + j * block_size, bbase);
             // fill out block
             curr->header.iflags = 0;
@@ -60,7 +60,7 @@ static int prealloc_blocks(struct block* head, uint8_t* base, uint64_t block_siz
             curr->header.size = block_size;
             curr->header.prev = node;
             curr->header.next = 0;
-            curr->addr = addr;
+            curr->addr = addr; // FIXME // I'm pretty sure there should be an offset
             node->header.next = curr;
             node = curr;
         }
@@ -76,16 +76,16 @@ int mem_init(struct earlymem_info info){
         panic("kpaging_init failed");
 
     struct block b, *node;
-    uint64_t addr, bpp, pos, idx; // blocks per page,
+    uint64_t addr, bpp, pos, idx; // bpp=> blocks per page,
     page_size = 1 << info.log_page_size;
     size_t block_size = page_size;
     buckets = (page_size - sizeof(uint64_t*)) / sizeof(struct block);
 
     // allocate memory for init memory data structures
     addr = alloc_gdpage();
-    memset(addr, 0, page_size);
+    memset((void*)addr, 0, page_size);
     bucket_base = (uint8_t *)addr;
-    pos += sizeof(uint64_t);
+    pos = sizeof(uint64_t);
 
     // create headers
     for(int i = 0; i < NUM_BUCKETS; i++){

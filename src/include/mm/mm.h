@@ -1,23 +1,12 @@
 #ifndef MM_H
 #define MM_H
 
-#include <stddef.h>
-#include <stdint.h>
+#include "mm/common.h"
 
 #define NUM_BUCKETS 4
 
 // kalloc flags
 #define KALLOC_ALIGNED 1 // ensure that address is page aligned
-
-struct earlymem_info{
-    uint64_t* page_bitmap;
-    uint64_t bitmap_size; // size in bytes
-    uint8_t log_page_size;
-    uint8_t log_table_size;
-    void* pml4;
-    uint8_t* kernel_start;
-    uint8_t* kernel_end;
-};
 
 struct block_header {
     union {

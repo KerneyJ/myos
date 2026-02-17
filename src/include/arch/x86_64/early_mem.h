@@ -2,7 +2,6 @@
 #define EARLY_MEM_H
 
 #include <stdint.h>
-#include "mm/mm.h"
 
 /* Since we're in 64bit mode each should have 512 entries
  */
@@ -15,16 +14,21 @@
 #define BITMAP_ENTRIES 0x8000
 #define BITMAP_ENTRY_SIZE 8
 
-extern uint64_t *pml4;
-extern uint64_t *pml3;
-extern uint64_t *pml2;
-extern uint8_t* kernel_start;
-extern uint8_t* kernel_end;
+struct earlymem_info{
+    uint64_t* page_bitmap;
+    uint64_t bitmap_size; // size in bytes
+    uint8_t log_page_size;
+    uint8_t log_table_size;
+    void* pml4;
+    uint8_t* kernel_start;
+    uint8_t* kernel_end;
+};
 
 extern uint64_t swap_pagetables(uint64_t pml4);
 
 uint64_t earlymem_init(struct earlymem_info* info);
-uint64_t map_page_earlymem(uint64_t vaddr, uint64_t paddr, uint64_t flags);
+int map_page_earlymem(uint64_t vaddr, uint64_t paddr, uint64_t flags);
+uint64_t alloc_gdpage_earlymem();
 uint64_t alloc_pagetable_earlymem();
 uint64_t alloc_page_earlymem(uint64_t addr);
 uint64_t free_page_earlymem(uint64_t paddr);
